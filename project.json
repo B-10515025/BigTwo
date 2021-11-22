@@ -1,0 +1,8 @@
+{
+  "engine": "cocos-creator-js",
+  "packages": "packages",
+  "name": "BigTwoClient",
+  "id": "3bab1089-a72f-4056-86b1-71ee46afd414",
+  "version": "2.4.3",
+  "isNew": false
+}
