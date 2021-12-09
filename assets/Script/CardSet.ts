@@ -6,12 +6,12 @@ export default class CardSet extends cc.Component {
     @property(cc.SpriteAtlas)
     cardAtlas: cc.SpriteAtlas;
 
-    code: number;
-    choose: number;
+    Code: number;
+    Choose: number;
 
-    setCard(code: number, click: boolean) {
-        this.code = code;
-        this.choose = 0;
+    SetCard(code: number, click: boolean) {
+        this.Code = code;
+        this.Choose = 0;
         this.node.destroyAllChildren();
         this.node.removeAllChildren();
         const Width = 30, Height = 20;
@@ -31,9 +31,9 @@ export default class CardSet extends cc.Component {
                         button.node.setPosition(button.node.x, (button.node.y + Height) % (Height * 2));
                         let code = Math.pow(2, Number(button.node.getComponent(cc.Sprite).spriteFrame.name));
                         if (button.node.y == 0) {
-                            this.choose -= code;
+                            this.Choose -= code;
                         } else {
-                            this.choose += code;
+                            this.Choose += code;
                         }
                     });
                 }
@@ -53,25 +53,5 @@ export default class CardSet extends cc.Component {
             this.node.children[i].setPosition(startX + i * Width, 0);
         }
     }
-
-    chooseCard(code: number) {
-        let arr = [];
-        for (let i = 0; i < 52 && code > 0; i++) {
-            if (code % 2) {
-                arr.push(i);
-            }
-            code = Math.floor(code / 2);
-        }
-        this.choose = 0;
-        const Height = 20;
-        for (let i = 0; i < this.node.children.length; i++) {
-            let index = Number(this.node.children[i].getComponent(cc.Sprite).spriteFrame.name);
-            if (arr.indexOf(index) < 0) {
-                this.node.children[i].setPosition(this.node.children[i].x, 0);
-            } else {
-                this.node.children[i].setPosition(this.node.children[i].x, Height);
-                this.choose += Math.pow(2, index);
-            }
-        }
-    }
+    
 }

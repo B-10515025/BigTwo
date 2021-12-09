@@ -3,27 +3,74 @@ interface CallbackFunc {
     callback(data: object): Promise<void>;
 }
 
-async function sleep(ms) {
-    return new Promise(r => setTimeout(r, ms));
+export interface Message {
+    Path: string;
+	Data: string;
 }
 
-export default class Client {
+export interface Config {
+    PlayerCount: number;
+	Rule: number;
+	BotName: string[];
+}
 
+interface CardSet {
+    Code: number;
+	Type: number;
+	Level: number;
+	Value: number;
+}
+
+interface Point {
+    Describe: string;
+	Point: number;
+}
+
+export interface Result {
+    Cards: number;
+    WinScores: number;
+    PointList: Point[];
+    IsAllPay: boolean;
+}
+
+interface Log {
+	PlayersCard: number[];
+	Index: number;
+	ActionCard: CardSet;
+}
+
+export interface State {
+	Config: Config;
+	PlayersCard: number[];
+	PlayingIndex: number;
+	PerviousCard: number[];
+	IsFirstResult: boolean;
+	PlayersResult: Result[];
+	History: Log[];
+}
+
+export interface Action {
+    Index: number;
+	Card: number;
+}
+
+export interface TestConfig {
+    Config: Config;
+	Count: number;
+}
+
+export class Client {
+
+    // Client private variable
     static ws: WebSocket;
-    static uri: string = "ws://";
+    static uri: string = "ws://localhost";
+    static callbackList: CallbackFunc[] = [];
+    static messageList: Message[] = [];
+
+    // Client public variable
     static IsOpen: boolean = false;
     static OnConnect(): void{};
     static OnDisconnect(): void{};
-    static callbackList: CallbackFunc[] = [];
-    static msgList: any[] = [];
-    static complete: boolean = true;
-
-    static firstLoad: boolean = true;
-    static nickname: string = "";
-
-    public static AddCallback(name: string, callback: any) {
-        Client.callbackList.push({name, callback});
-    }
 
     public static SetCallback(name: string, callback: any) {
         for (let i = 0; i < Client.callbackList.length; i++) {
@@ -35,22 +82,21 @@ export default class Client {
         Client.callbackList.push({name, callback});
     }
 
-    public static connect(uri: string) {
+    public static Connect(uri: string) {
         Client.uri = "ws://" + uri;
         Client.ws = new WebSocket(Client.uri);
-
         Client.ws.onopen = async function() {
             Client.IsOpen = true;
-            Client.msgList = [];
+            Client.messageList = [];
             Client.OnConnect();
             console.log("connected to " + Client.uri);
             while (Client.IsOpen) {
-                if (Client.msgList.length > 0) {
-                    let data = Client.msgList[0];
-                    Client.msgList.shift();
+                if (Client.messageList.length > 0) {
+                    let message = Client.messageList[0];
+                    Client.messageList.shift();
                     for (let i = 0; i < Client.callbackList.length; i++) {
-                        if (Client.callbackList[i].name == data.Type) {
-                            await Client.callbackList[i].callback(data);
+                        if (Client.callbackList[i].name == message.Path) {
+                            await Client.callbackList[i].callback(message);
                         }
                     }
                 } else {
@@ -58,54 +104,29 @@ export default class Client {
                 }
             }
         }
-
         Client.ws.onclose = function(event) {
             Client.IsOpen = false;
-            Client.msgList = [];
+            Client.messageList = [];
             Client.OnDisconnect();
             console.log("connection closed (" + event.code + ")");
         }
-
         Client.ws.onmessage = async function(event) {
             let data = JSON.parse(event.data);
-            Client.msgList.push(data);
+            console.log(data);
+            Client.messageList.push(data);
         }
     }
 
-    public static close() {
+    public static Close() {
         Client.ws.close();
     }
 
-    public static Login(name: string) {
-        Client.nickname = name;
-        Client.ws.send(JSON.stringify({ Type: "enter.lobby", Name: name }));
+    public static SendMessage(path: string, data: any) {
+        Client.ws.send(JSON.stringify({ Path: path, Data: JSON.stringify(data) }));
     }
 
-    public static Logout() {
-        Client.ws.send(JSON.stringify({ Type: "exit.lobby" }));
-    }
+}
 
-    public static JoinRoom(name: string) {
-        Client.ws.send(JSON.stringify({ Type: "enter.room", Name: name }));
-    }
-
-    public static ExitRoom() {
-        Client.ws.send(JSON.stringify({ Type: "exit.room" }));
-    }
-
-    public static Ready(opt: number) {
-        Client.ws.send(JSON.stringify({ Type: "game.set", Name: "Ready", Operate: opt }));
-    }
-
-    public static Auto(opt: number) {
-        Client.ws.send(JSON.stringify({ Type: "game.set", Name: "Auto", Operate: opt }));
-    }
-
-    public static Play(point: number) {
-        Client.ws.send(JSON.stringify({ Type: "game.play", Name: "DROP_CARD", Operate: point }));
-    }
-
-    public static Delay(time: number) {
-        Client.ws.send(JSON.stringify({ Type: "game.play", Name: "ADD_TIME", Operate: time }));
-    }
+async function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
 }
