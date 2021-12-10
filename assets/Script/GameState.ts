@@ -67,7 +67,7 @@ export default class GameState extends cc.Component {
         }
         action = {
             Index: this.state.PlayingIndex,
-            Card: this.playersCard[this.state.PlayingIndex].Choose,
+            Card: this.playersCard[seatIndex(this.state.PlayingIndex, this.state.PerviousCard.length)].Choose,
         };
         return action;
     }

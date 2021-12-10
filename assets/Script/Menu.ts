@@ -1,12 +1,32 @@
-import { Config } from "./Client"
+import { Client, Config, Message } from "./Client"
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
 export default class Menu extends cc.Component {
 
+    // Bot
+    @property(cc.Node)
+    botNode: cc.Node;
+
     @property(cc.Button)
-    closeButton: cc.Button;
+    closeBotButton: cc.Button;
+
+    @property([cc.ToggleContainer])
+    botToggleContainers: cc.ToggleContainer[] = [];
+
+    @property(cc.Prefab)
+    botPrefeb: cc.Node;
+
+    @property(cc.Button)
+    confirmBotButton: cc.Button;
+
+    // Config
+    @property(cc.Node)
+    configNode: cc.Node;
+
+    @property(cc.Button)
+    closeConfigButton: cc.Button;
     
     @property(cc.Button)
     defaultIGSButton: cc.Button;
@@ -15,7 +35,7 @@ export default class Menu extends cc.Component {
     defaultHHFButton: cc.Button;
 
     @property(cc.Button)
-    confirmButton: cc.Button;
+    confirmConfigButton: cc.Button;
 
     @property(cc.ToggleContainer)
     playerToggleContainer: cc.ToggleContainer;
@@ -30,12 +50,57 @@ export default class Menu extends cc.Component {
     };
 
     onLoad () {
+        this.botNode.active = false;
+        this.configNode.active = true;
+        this.setBot();
         this.default_IGS();
         this.setConfig();
-        this.closeButton.node.on('click', () => { this.closeMenu() });
+        this.closeBotButton.node.on('click', () => { this.botNode.active = false; });
+        this.confirmBotButton.node.on('click', () => { this.setBot(); });
+        this.closeConfigButton.node.on('click', () => { this.configNode.active = false; });
         this.defaultIGSButton.node.on('click', () => { this.default_IGS() });
         this.defaultHHFButton.node.on('click', () => { this.default_HHF() });
-        this.confirmButton.node.on('click', () => { this.setConfig(); });
+        this.confirmConfigButton.node.on('click', () => { this.setConfig(); });
+        Client.SetCallback("test.name", (message: Message) => { this.updateBotNames(JSON.parse(message.Data)) });
+    }
+
+    updateBotNames(botNames: string[]) {
+        const Height = 50;
+        for (let i = 0; i < this.botToggleContainers.length; i++) {
+            this.botToggleContainers[i].node.destroyAllChildren();
+            this.botToggleContainers[i].node.removeAllChildren();
+            for (let j = 0; j < botNames.length; j++) {
+                var bot = cc.instantiate(this.botPrefeb);
+                bot.getComponent(cc.Toggle).isChecked = this.Config.BotName[i] == botNames[j];
+                bot.children[2].getComponent(cc.Label).string = botNames[j];
+                bot.setPosition(0, -j * Height);
+                bot.parent = this.botToggleContainers[i].node;
+            }
+        }
+        this.botNode.active = true;
+    }
+
+    OpenBotMenu() {
+        Client.SendMessage("test.name", "");
+    }
+
+    setBot() {
+        this.Config.BotName = [];
+        for (let i = 0; i < this.botToggleContainers.length; i++) {
+            let name: string = "";
+            for (let j = 0; j < this.botToggleContainers[i].node.children.length; j++) {
+                if (this.botToggleContainers[i].node.children[j].getComponent(cc.Toggle).isChecked) {
+                    name = this.botToggleContainers[i].node.children[j].children[2].getComponent(cc.Label).string;
+                    break;
+                }
+            }
+            this.Config.BotName.push(name);
+        }
+        this.botNode.active = false;
+    }
+
+    OpenConfigMenu() {
+        this.configNode.active = true;
     }
 
     default_IGS() {
@@ -59,7 +124,6 @@ export default class Menu extends cc.Component {
     }
 
     setConfig() {
-        this.Config.BotName = [];
         for (let i = 0; i < this.playerToggleContainer.toggleItems.length; i++) {
             if (this.playerToggleContainer.toggleItems[i].isChecked) {
                 this.Config.PlayerCount = i + 2;
@@ -72,11 +136,7 @@ export default class Menu extends cc.Component {
                 this.Config.Rule += rule(i);
             }
         }
-        this.closeMenu();
-    }
-
-    closeMenu() {
-        this.node.active = false;
+        this.configNode.active = false;
     }
 
 }

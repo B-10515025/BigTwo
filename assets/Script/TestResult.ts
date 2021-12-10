@@ -34,7 +34,7 @@ export default class TResult extends cc.Component {
  
     onLoad () {
         //設定UI
-        this.againButton.node.on('click', () => { Client.SendMessage("test", this.testConfig); });
+        this.againButton.node.on('click', () => { Client.SendMessage("test.test", this.testConfig); });
         this.closeButton.node.on('click', () => { this.closeResult() });
     }
  
@@ -52,7 +52,7 @@ export default class TResult extends cc.Component {
         this.resultNode.active = true;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
-        this.failLabel.string = "總場數: " + this.failCount;
+        this.failLabel.string = "錯誤場數: " + this.failCount;
         this.resultNode.children[0].destroyAllChildren();
         this.resultNode.children[0].removeAllChildren();
         const Width = 365;

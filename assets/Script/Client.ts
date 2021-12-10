@@ -122,7 +122,9 @@ export class Client {
     }
 
     public static SendMessage(path: string, data: any) {
-        Client.ws.send(JSON.stringify({ Path: path, Data: JSON.stringify(data) }));
+        if (Client.IsOpen) {
+            Client.ws.send(JSON.stringify({ Path: path, Data: JSON.stringify(data) }));
+        }
     }
 
 }

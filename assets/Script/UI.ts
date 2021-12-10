@@ -24,7 +24,10 @@ export default class UI extends cc.Component {
     countEditBox: cc.EditBox;
 
     @property(cc.Button)
-    menuButton: cc.Button;
+    botButton: cc.Button;
+
+    @property(cc.Button)
+    configButton: cc.Button;
 
     @property(GameState)
     game: GameState;
@@ -40,7 +43,8 @@ export default class UI extends cc.Component {
         this.playButton.node.on('click', () => { this.playCard() });
         this.autoButton.node.on('click', () => { this.autoNext() });
         this.testButton.node.on('click', () => { this.TestBot() });
-        this.menuButton.node.on('click', () => { this.openMenu(); });
+        this.botButton.node.on('click', () => { this.menu.OpenBotMenu(); });
+        this.configButton.node.on('click', () => { this.menu.OpenConfigMenu(); });
         // 設定Client Callback
         Client.SetCallback("test.result", (message: Message) => {
             let state: State = JSON.parse(message.Data);
@@ -72,10 +76,7 @@ export default class UI extends cc.Component {
             Count: Number(this.countEditBox.string),
         }
         this.testResult.TestBegin(this.menu.Config.PlayerCount, testConfig);
-        Client.SendMessage("test", testConfig);
+        Client.SendMessage("test.test", testConfig);
     }
 
-    openMenu() {
-        this.menu.node.active = true;
-    }
 }
