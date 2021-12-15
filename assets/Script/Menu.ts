@@ -1,4 +1,5 @@
-import { Client, Config, Message } from "./Client"
+import { Client, Config, Message, NameLists } from "./Client"
+import DropDown from "./DropDown"
 
 const {ccclass, property} = cc._decorator;
 
@@ -12,8 +13,11 @@ export default class Menu extends cc.Component {
     @property(cc.Button)
     closeBotButton: cc.Button;
 
-    @property([cc.ToggleContainer])
-    botToggleContainers: cc.ToggleContainer[] = [];
+    @property([DropDown])
+    botSelectors: DropDown[] = [];
+
+    @property(DropDown)
+    dealerSelectors: DropDown;
 
     @property(cc.Prefab)
     botPrefeb: cc.Node;
@@ -47,36 +51,29 @@ export default class Menu extends cc.Component {
         PlayerCount: 0,
         Rule: 0,
         BotName: [],
+        Dealer: "",
     };
 
     onLoad () {
         this.botNode.active = false;
         this.configNode.active = true;
-        this.setBot();
+        this.setSelect();
         this.default_IGS();
         this.setConfig();
         this.closeBotButton.node.on('click', () => { this.botNode.active = false; });
-        this.confirmBotButton.node.on('click', () => { this.setBot(); });
+        this.confirmBotButton.node.on('click', () => { this.setSelect(); });
         this.closeConfigButton.node.on('click', () => { this.configNode.active = false; });
         this.defaultIGSButton.node.on('click', () => { this.default_IGS() });
         this.defaultHHFButton.node.on('click', () => { this.default_HHF() });
         this.confirmConfigButton.node.on('click', () => { this.setConfig(); });
-        Client.SetCallback("test.name", (message: Message) => { this.updateBotNames(JSON.parse(message.Data)) });
+        Client.SetCallback("test.name", (message: Message) => { this.updateSelector(JSON.parse(message.Data)) });
     }
 
-    updateBotNames(botNames: string[]) {
-        const Height = 50;
-        for (let i = 0; i < this.botToggleContainers.length; i++) {
-            this.botToggleContainers[i].node.destroyAllChildren();
-            this.botToggleContainers[i].node.removeAllChildren();
-            for (let j = 0; j < botNames.length; j++) {
-                var bot = cc.instantiate(this.botPrefeb);
-                bot.getComponent(cc.Toggle).isChecked = this.Config.BotName[i] == botNames[j];
-                bot.children[2].getComponent(cc.Label).string = botNames[j];
-                bot.setPosition(0, -j * Height);
-                bot.parent = this.botToggleContainers[i].node;
-            }
+    updateSelector(nameLists: NameLists) {
+        for (let i = 0; i < this.botSelectors.length; i++) {
+            this.botSelectors[i].SetNames(nameLists.BotNameList);
         }
+        this.dealerSelectors.SetNames(nameLists.DealerNameList);
         this.botNode.active = true;
     }
 
@@ -84,18 +81,12 @@ export default class Menu extends cc.Component {
         Client.SendMessage("test.name", "");
     }
 
-    setBot() {
+    setSelect() {
         this.Config.BotName = [];
-        for (let i = 0; i < this.botToggleContainers.length; i++) {
-            let name: string = "";
-            for (let j = 0; j < this.botToggleContainers[i].node.children.length; j++) {
-                if (this.botToggleContainers[i].node.children[j].getComponent(cc.Toggle).isChecked) {
-                    name = this.botToggleContainers[i].node.children[j].children[2].getComponent(cc.Label).string;
-                    break;
-                }
-            }
-            this.Config.BotName.push(name);
+        for (let i = 0; i < this.botSelectors.length; i++) {
+            this.Config.BotName.push(this.botSelectors[i].GetCurrent());
         }
+        this.Config.Dealer = this.dealerSelectors.GetCurrent();
         this.botNode.active = false;
     }
 

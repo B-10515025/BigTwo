@@ -12,6 +12,7 @@ export interface Config {
     PlayerCount: number;
 	Rule: number;
 	BotName: string[];
+    Dealer: string;
 }
 
 interface CardSet {
@@ -57,6 +58,11 @@ export interface Action {
 export interface TestConfig {
     Config: Config;
 	Count: number;
+}
+
+export interface NameLists {
+    BotNameList: string[];
+	DealerNameList: string[];
 }
 
 export class Client {
