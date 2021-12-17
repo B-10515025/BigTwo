@@ -36,14 +36,21 @@ export default class DropDown extends cc.Component {
     SetNames (botList: string[]) {
         this.contentNode.destroyAllChildren();
         this.contentNode.removeAllChildren();
-        const Height = 25;
+        const Height = this.node.height;
+        this.scrollNode.setPosition(0, -Height / 2);
+        this.scrollNode.width = this.node.width;
         this.scrollNode.height = botList.length * Height;
+        this.viewNode.width = this.node.width;
         this.viewNode.height = botList.length * Height;
+        this.contentNode.width = this.node.width;
         this.contentNode.height = botList.length * Height;
         if (botList.length > 6) {
             this.scrollNode.height = 6 * Height;
             this.viewNode.height = 6 * Height;
         }
+        this.select.setContentSize(this.node.getContentSize());
+        this.select.getComponent(cc.Label).lineHeight = Height;
+        this.select.getComponent(cc.Label).fontSize = Height * 0.8;
         if (botList.length <= 0) {
             this.barNode.height = 0;
             this.select.getComponent(cc.Label).string = "";
@@ -62,13 +69,22 @@ export default class DropDown extends cc.Component {
             bot.on('click', (target: cc.Node) => { 
                 this.select.getComponent(cc.Label).string = target.getComponent(cc.Label).string;
                 this.onSelect();
+                this.OnChange();
             });
             bot.parent = this.contentNode;
         }
     }
 
+    SetCurrent(item: string) {
+        this.select.getComponent(cc.Label).string = item;
+    }
+
     GetCurrent(): string {
         return this.select.getComponent(cc.Label).string;
+    }
+
+    OnChange() {
+
     }
 
 }

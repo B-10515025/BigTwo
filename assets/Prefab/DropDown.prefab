@@ -54,7 +54,7 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 0.5,
+      "x": 0,
       "y": 0.5
     },
     "_trs": {
@@ -128,7 +128,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        0,
+        120,
         0,
         0,
         0,
@@ -218,7 +218,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "2cbvRVBSZPcLmuGaxLNDXg",
     "sync": false
@@ -262,7 +262,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -110,
+        0,
         0,
         0,
         0,
@@ -326,7 +326,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "71vwwRgTFN7YQQvyY+8cBw",
     "sync": false
@@ -581,7 +581,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "20+JxseC5MSY70Gr8Mz8Mh",
     "sync": false
@@ -789,7 +789,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "47vLsNnCpAVIBPcXY0IPPc",
     "sync": false
@@ -800,7 +800,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "a8gwYn7MpJ6ZnWL9ho1OL4",
     "sync": false
@@ -870,7 +870,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "a7KNi1A6ZNZ5ib5y6ZsyEt",
     "sync": false
@@ -913,7 +913,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "3az9ASf/pOQYGFYMzdFrWI",
     "sync": false
@@ -1037,7 +1037,7 @@
       "__id__": 1
     },
     "asset": {
-      "__id__": 0
+      "__uuid__": "09b7c0af-c2c9-4237-8ec3-f1786bd11b85"
     },
     "fileId": "",
     "sync": false

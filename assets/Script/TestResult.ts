@@ -1,9 +1,14 @@
-import { Client, Result, State, TestConfig } from "./Client"
+import { Client, Config, Message, Result, State, TestConfig } from "./Client"
+import Chart from "./Chart";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class TResult extends cc.Component {
+export default class TestResult extends cc.Component {
+
+    // 輸入UI
+    @property(cc.EditBox)
+    countEditBox: cc.EditBox;
 
     @property(cc.Button)
     againButton: cc.Button;
@@ -24,9 +29,15 @@ export default class TResult extends cc.Component {
     @property(cc.Label)
     failLabel: cc.Label;
 
-    testConfig: TestConfig;
+    // 子模組
+    @property(Chart)
+    chart: Chart;
+
+    config: Config;
  
     IsTesting: boolean;
+    updated: boolean;
+
     roundCount: number;
     failCount: number;
     totalWin: number[];
@@ -34,13 +45,24 @@ export default class TResult extends cc.Component {
  
     onLoad () {
         //設定UI
-        this.againButton.node.on('click', () => { Client.SendMessage("test.test", this.testConfig); });
-        this.closeButton.node.on('click', () => { this.closeResult() });
+        this.againButton.node.on('click', () => { this.testBegin() });
+        this.closeButton.node.on('click', () => { this.resultNode.active = false; });
+        // 設定Client Callback
+        Client.SetCallback("test.result", (message: Message) => {
+            let state: State = JSON.parse(message.Data);
+            this.testUpdate(state);
+        });
+        Client.SetCallback("test.error", () => {
+            this.testError();
+        });
+        Client.SetCallback("test.end", () => {
+            this.testEnd();
+        });
     }
- 
-    TestBegin(PlayerCount: number, config: TestConfig) {
-        this.testConfig = config;
-        this.IsTesting = true;
+    
+    OpenResult(PlayerCount: number, config: Config) {
+        this.config = config;
+        this.IsTesting = false;
         this.roundCount = 0;
         this.failCount = 0;
         this.totalWin = [];
@@ -49,6 +71,7 @@ export default class TResult extends cc.Component {
             this.totalWin.push(0);
             this.totalScore.push(0);
         }
+        this.chart.Reset(PlayerCount);
         this.resultNode.active = true;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
@@ -63,13 +86,9 @@ export default class TResult extends cc.Component {
             player.children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
                 "總分數:" + this.totalScore[i];
-            if (this.totalScore[i] > 0) {
-                player.children[2].getComponent(cc.Label).string = "+" + this.totalScore[i];
-                player.children[2].color = cc.color(157, 23, 7);
-            } else {
-                player.children[2].getComponent(cc.Label).string = this.totalScore[i].toString();
-                player.children[2].color = cc.color(22, 92, 161);
-            }
+            player.children[2].on('click', () => {
+               this.chart.OpenChart(i);
+            });
             player.parent = this.resultNode.children[0];
             offsetX -= Width;
         }
@@ -79,9 +98,21 @@ export default class TResult extends cc.Component {
         }
     }
  
-    TestUpdate(state: State) {
+    testBegin() {
+        let testConfig: TestConfig = {
+            Config: this.config,
+            Count: Number(this.countEditBox.string),
+        }
+        Client.SendMessage("test.test", testConfig);
         this.IsTesting = true;
+        this.updated = false;
+    }
+ 
+    testUpdate(state: State) {
+        this.IsTesting = true;
+        this.updated = false;
         this.roundCount++;
+        // update general data
         if (state.PlayersResult && state.PlayersResult.length > 0) {
             for (let i = 0; i < state.PlayersResult.length; i++) {
                 let result: Result = state.PlayersResult[i];
@@ -93,52 +124,37 @@ export default class TResult extends cc.Component {
         } else {
             this.failCount++;
         }
+        // update visualization data
+        this.chart.TestUpdate(state);
+        // update replay
     }
 
-    TestError() {
+    testError() {
         this.IsTesting = true;
+        this.updated = false;
         this.roundCount++;
         this.failCount++;
     }
 
-    TestEnd() {
+    testEnd() {
         this.IsTesting = false;
     }
  
     update (dt) {
+        if (this.updated) {
+            return;
+        }
         this.againButton.node.active = !this.IsTesting;
         this.closeButton.node.active = !this.IsTesting;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
         this.failLabel.string = "總場數: " + this.failCount;
-        this.resultNode.children[0].destroyAllChildren();
-        this.resultNode.children[0].removeAllChildren();
-        const Width = 365;
-        let offsetX = 0;
         for (let i = 0; i < this.totalWin.length; i++) {
-            var player = cc.instantiate(this.playerPrefeb);
-            player.children[0].getComponent(cc.Label).string = "Player " + (i + 1);
-            player.children[1].getComponent(cc.Label).string = 
+            this.resultNode.children[0].children[i].children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
                 "總分數:" + this.totalScore[i];
-            if (this.totalScore[i] > 0) {
-                player.children[2].getComponent(cc.Label).string = "+" + this.totalScore[i];
-                player.children[2].color = cc.color(157, 23, 7);
-            } else {
-                player.children[2].getComponent(cc.Label).string = this.totalScore[i].toString();
-                player.children[2].color = cc.color(22, 92, 161);
-            }
-            player.parent = this.resultNode.children[0];
-            offsetX -= Width;
         }
-        offsetX = (offsetX + Width) / 2;
-        for (let i = 0; i < this.resultNode.children[0].children.length; i++) {
-            this.resultNode.children[0].children[i].setPosition(offsetX + i * Width, 0);
-        }
-    }
-
-    closeResult() {
-        this.resultNode.active = false;
+        this.updated = true;
     }
 
 }
