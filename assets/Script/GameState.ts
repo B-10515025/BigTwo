@@ -42,6 +42,8 @@ export default class GameState extends cc.Component {
         const RuleDoubleMultiply = 1 << 26;
         if (state.PlayersResult.length > 0) {
             this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply, state.IsFirstResult);
+        } else {
+            this.result.node.active = false;
         }
     }
 

@@ -21,14 +21,8 @@ export default class GameResult extends cc.Component {
     lastSprite: cc.SpriteFrame;
 
     onLoad () {
-        // 初始化變數
-        this.Init();
         // 設定UI
         this.closeButton.node.on('click', () => { this.closeResult() });
-    }
-
-    Init() {
-        this.resultNode.active = false;
     }
 
     ShowResult(results: Result[], useMultiply: boolean, first: boolean) {

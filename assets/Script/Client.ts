@@ -48,6 +48,7 @@ export interface State {
 	IsFirstResult: boolean;
 	PlayersResult: Result[];
 	History: Log[];
+    StartType: number[][];
 }
 
 export interface Action {

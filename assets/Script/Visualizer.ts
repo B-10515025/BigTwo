@@ -253,16 +253,21 @@ export class Visualizer extends cc.Mask {
         for (let i = 0; i < data.length; i++) {
             let dataLabelNode = new cc.Node("dataLabel")
             let dataLabel = dataLabelNode.addComponent(cc.Label);
-            dataLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY + data[i].Value / range * rangeHeight);
+            let Y = offsetY + data[i].Value / range * rangeHeight;
+            if (Y > offsetY + rangeHeight - dataTextSize) {
+                Y = offsetY + rangeHeight - dataTextSize;
+            }
+            dataLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (data.length + 1), Y);
             dataLabelNode.setAnchorPoint(0.5, 0);
             dataLabelNode.color = dataTextColor;
             dataLabelNode.parent = this.graphics.node;
             if (total == 0) {
                 dataLabel.string = "0%";
             } else {
-                dataLabel.string = Math.round(data[i].Value / total * 10000) / 100 + "%";
+                dataLabel.string = (Math.round(data[i].Value * 100) / 100).toString() + "\n(" + Math.round(data[i].Value / total * 10000) / 100 + "%)";
             }
             dataLabel.fontSize = dataTextSize;
+            dataLabel.lineHeight = dataTextSize;
             dataLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
             dataLabel.verticalAlign = cc.Label.VerticalAlign.BOTTOM;
             dataLabel.enableWrapText = false;

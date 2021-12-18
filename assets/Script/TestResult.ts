@@ -1,5 +1,6 @@
 import { Client, Config, Message, Result, State, TestConfig } from "./Client"
 import Chart from "./Chart";
+import Replay from "./Replay";
 
 const {ccclass, property} = cc._decorator;
 
@@ -12,6 +13,9 @@ export default class TestResult extends cc.Component {
 
     @property(cc.Button)
     againButton: cc.Button;
+
+    @property(cc.Button)
+    logButton: cc.Button;
 
     @property(cc.Button)
     closeButton: cc.Button;
@@ -33,6 +37,9 @@ export default class TestResult extends cc.Component {
     @property(Chart)
     chart: Chart;
 
+    @property(Replay)
+    replay: Replay;
+
     config: Config;
  
     IsTesting: boolean;
@@ -46,7 +53,8 @@ export default class TestResult extends cc.Component {
     onLoad () {
         //設定UI
         this.againButton.node.on('click', () => { this.testBegin() });
-        this.closeButton.node.on('click', () => { this.resultNode.active = false; });
+        this.logButton.node.on('click', () => { this.replay.Open() });
+        this.closeButton.node.on('click', () => { this.resultNode.active = false });
         // 設定Client Callback
         Client.SetCallback("test.result", (message: Message) => {
             let state: State = JSON.parse(message.Data);
@@ -72,6 +80,7 @@ export default class TestResult extends cc.Component {
             this.totalScore.push(0);
         }
         this.chart.Reset(PlayerCount);
+        this.replay.Reset();
         this.resultNode.active = true;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
@@ -123,10 +132,12 @@ export default class TestResult extends cc.Component {
             }
         } else {
             this.failCount++;
+            return;
         }
         // update visualization data
         this.chart.TestUpdate(state);
         // update replay
+        this.replay.AddState(state);
     }
 
     testError() {
@@ -145,6 +156,7 @@ export default class TestResult extends cc.Component {
             return;
         }
         this.againButton.node.active = !this.IsTesting;
+        this.logButton.node.active = !this.IsTesting;
         this.closeButton.node.active = !this.IsTesting;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
