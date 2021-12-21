@@ -39,7 +39,7 @@ export default class GameState extends cc.Component {
                 this.perviousCard[seatIndex(i, state.PerviousCard.length)].SetCard(state.PerviousCard[i], false);
             }
         }
-        const RuleDoubleMultiply = 1 << 26;
+        const RuleDoubleMultiply = 1 << 28;
         if (state.PlayersResult.length > 0) {
             this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply, state.IsFirstResult);
         } else {

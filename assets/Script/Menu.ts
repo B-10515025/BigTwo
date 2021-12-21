@@ -18,10 +18,7 @@ export default class Menu extends cc.Component {
 
     @property(DropDown)
     dealerSelectors: DropDown;
-
-    @property(cc.Prefab)
-    botPrefeb: cc.Node;
-
+    
     @property(cc.Button)
     confirmBotButton: cc.Button;
 
@@ -47,8 +44,12 @@ export default class Menu extends cc.Component {
     @property([cc.Toggle])
     ruleToggleList: cc.Toggle[] = [];
 
+    @property(DropDown)
+    doubleRate: DropDown;
+
     Config: Config = {
         PlayerCount: 0,
+        DoubleRate: 1,
         Rule: 0,
         BotName: [],
         Dealer: "",
@@ -66,6 +67,11 @@ export default class Menu extends cc.Component {
         this.defaultIGSButton.node.on('click', () => { this.default_IGS() });
         this.defaultHHFButton.node.on('click', () => { this.default_HHF() });
         this.confirmConfigButton.node.on('click', () => { this.setConfig(); });
+        this.doubleRate.SetNames(["0", "1", "2", "3", "4", "5"]);
+        this.doubleRate.SetCurrent("1");
+        this.doubleRate.OnChange = () => {
+            this.Config.DoubleRate = Number(this.doubleRate.GetCurrent());
+        }
         Client.SetCallback("test.name", (message: Message) => { this.updateSelector(JSON.parse(message.Data)) });
     }
 
@@ -97,7 +103,7 @@ export default class Menu extends cc.Component {
     default_IGS() {
         const using = [ true, false, true, true, false, true, true, true,
                         true, false, false, false, false, false, false,
-                        false, true, false, true, true, true, true, false ];
+                        false, true, false, false, false, false, false, true, true, true, true, false ];
         this.playerToggleContainer.toggleItems[2].isChecked = true;
         for (let i = 0; i < this.ruleToggleList.length; i++) {
             this.ruleToggleList[i].isChecked = using[i];
@@ -107,7 +113,7 @@ export default class Menu extends cc.Component {
     default_HHF() {
         const using = [ true, false, false, true, false, true, true, true,
                         true, false, true, true, false, true, false,
-                        true, true, true, false, false, true, false, true ];
+                        true, true, true, true, true, true, true, false, false, true, false, true ];
         this.playerToggleContainer.toggleItems[1].isChecked = true;
         for (let i = 0; i < this.ruleToggleList.length; i++) {
             this.ruleToggleList[i].isChecked = using[i];
@@ -135,7 +141,7 @@ export default class Menu extends cc.Component {
 function rule(index: number) {
     const pow = [   0, 1, 2, 3, 4, 5, 6, 7,
                     8, 9, 10, 11, 12, 13, 14,
-                    15, 16, 18, 20, 21, 22, 26, 27, 
-                    28];
+                    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 28, 29, 
+                    30];
     return (1 << pow[index + 1]) - (1 << pow[index]);
 }

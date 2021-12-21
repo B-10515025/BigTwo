@@ -10,6 +10,7 @@ export interface Message {
 
 export interface Config {
     PlayerCount: number;
+    DoubleRate: number;
 	Rule: number;
 	BotName: string[];
     Dealer: string;
