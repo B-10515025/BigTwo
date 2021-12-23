@@ -149,6 +149,7 @@ export default class TestResult extends cc.Component {
 
     testEnd() {
         this.IsTesting = false;
+        this.updated = false;
     }
  
     update (dt) {
