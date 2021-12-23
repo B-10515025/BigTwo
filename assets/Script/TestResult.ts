@@ -160,7 +160,7 @@ export default class TestResult extends cc.Component {
         this.closeButton.node.active = !this.IsTesting;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
-        this.failLabel.string = "總場數: " + this.failCount;
+        this.failLabel.string = "錯誤場數: " + this.failCount;
         for (let i = 0; i < this.totalWin.length; i++) {
             this.resultNode.children[0].children[i].children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
