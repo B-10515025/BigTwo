@@ -171,6 +171,7 @@ export default class TestResult extends cc.Component {
         }
         this.againButton.node.active = !this.IsTesting;
         this.logButton.node.active = !this.IsTesting;
+        this.backendButton.node.active = !this.IsTesting;
         this.closeButton.node.active = !this.IsTesting;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;
