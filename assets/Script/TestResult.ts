@@ -18,6 +18,9 @@ export default class TestResult extends cc.Component {
     logButton: cc.Button;
 
     @property(cc.Button)
+    backendButton: cc.Button;
+
+    @property(cc.Button)
     closeButton: cc.Button;
 
     // 輸出UI
@@ -52,13 +55,19 @@ export default class TestResult extends cc.Component {
  
     onLoad () {
         //設定UI
-        this.againButton.node.on('click', () => { this.testBegin() });
+        this.againButton.node.on('click', () => { this.testBegin(false) });
         this.logButton.node.on('click', () => { this.replay.Open() });
+        this.backendButton.node.on('click', () => { this.testBegin(true) });
         this.closeButton.node.on('click', () => { this.resultNode.active = false });
         // 設定Client Callback
         Client.SetCallback("test.result", (message: Message) => {
             let state: State = JSON.parse(message.Data);
             this.testUpdate(state);
+        });
+        Client.SetCallback("test.result.backend", (message: Message) => {
+            this.IsTesting = true;
+            this.updated = false;
+            this.roundCount++;
         });
         Client.SetCallback("test.error", () => {
             this.testError();
@@ -107,12 +116,16 @@ export default class TestResult extends cc.Component {
         }
     }
  
-    testBegin() {
+    testBegin(backend: boolean) {
         let testConfig: TestConfig = {
             Config: this.config,
             Count: Number(this.countEditBox.string),
         }
-        Client.SendMessage("test.test", testConfig);
+        if (backend) {
+            Client.SendMessage("test.test.backend", testConfig);
+        } else {
+            Client.SendMessage("test.test", testConfig);
+        }
         this.IsTesting = true;
         this.updated = false;
     }
