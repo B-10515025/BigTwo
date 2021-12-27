@@ -14,6 +14,7 @@ export interface Config {
 	Rule: number;
 	BotName: string[];
     Dealer: string;
+    Debug: number[];
 }
 
 interface CardSet {

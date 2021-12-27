@@ -53,6 +53,7 @@ export default class Menu extends cc.Component {
         Rule: 0,
         BotName: [],
         Dealer: "",
+        Debug: [],
     };
 
     onLoad () {
