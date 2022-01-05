@@ -51,6 +51,7 @@ export interface State {
 	PlayersResult: Result[];
 	History: Log[];
     StartType: number[][];
+    CardScore: number[];
 }
 
 export interface Action {

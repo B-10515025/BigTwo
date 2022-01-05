@@ -7,6 +7,9 @@ const {ccclass, property} = cc._decorator;
 @ccclass
 export default class GameState extends cc.Component {
 
+    @property(cc.Label)
+    cardScoreLabel: cc.Label;
+
     @property([CardSet])
     playersCard: CardSet[] = [];
 
@@ -26,6 +29,17 @@ export default class GameState extends cc.Component {
 
     SetGameState (state: State) {
         this.state = state;
+        const threshold = -0.56;
+        this.cardScoreLabel.string = "";
+        for (let i = 0; i < state.CardScore.length; i++) {
+            this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
+            if (state.CardScore[i] < threshold) {
+                this.cardScoreLabel.string += "弱";
+            } else {
+                this.cardScoreLabel.string += "強";
+            }
+            this.cardScoreLabel.string += "(" + state.CardScore[i].toFixed(3) + ")\n";
+        }
         this.Reset();
         for (let i = 0; i < state.PlayersCard.length; i++) {
             this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex);
