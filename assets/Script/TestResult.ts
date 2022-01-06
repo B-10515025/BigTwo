@@ -158,7 +158,6 @@ export default class TestResult extends cc.Component {
         this.updated = false;
         this.roundCount++;
         // update general data
-        const threshold = -0.56;
         if (state.PlayersResult && state.PlayersResult.length > 0) {
             for (let i = 0; i < state.PlayersResult.length; i++) {
                 let result: Result = state.PlayersResult[i];
@@ -166,7 +165,7 @@ export default class TestResult extends cc.Component {
                     this.totalWin[i] += 1
                 }
                 this.totalScore[i] += result.WinScores;
-                if (state.CardScore[i] < threshold) {
+                if (state.CardScore[i] < state.Threshold) {
                     this.WorstCount[i]++;
                     this.totalWorst[i] += result.WinScores;
                 } else {

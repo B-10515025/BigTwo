@@ -29,11 +29,10 @@ export default class GameState extends cc.Component {
 
     SetGameState (state: State) {
         this.state = state;
-        const threshold = -0.56;
         this.cardScoreLabel.string = "";
         for (let i = 0; i < state.CardScore.length; i++) {
             this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
-            if (state.CardScore[i] < threshold) {
+            if (state.CardScore[i] < state.Threshold) {
                 this.cardScoreLabel.string += "弱";
             } else {
                 this.cardScoreLabel.string += "強";

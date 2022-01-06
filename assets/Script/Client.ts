@@ -52,6 +52,7 @@ export interface State {
 	History: Log[];
     StartType: number[][];
     CardScore: number[];
+    Threshold: number;
 }
 
 export interface Action {
