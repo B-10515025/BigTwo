@@ -27,8 +27,11 @@ export default class Chart extends cc.Component {
     updated: boolean;
 
     cardHistory: number[][][];
+    playCount: number[];
     playTypeCount: number[][];
     startTypeCount: number[][];
+    styleHistory: number[][][];
+    styleTypeCount: number[][];
 
     playerIndex: number;
 
@@ -37,21 +40,33 @@ export default class Chart extends cc.Component {
         this.updateCount = 0;
         //設定UI
         this.closeButton.node.on('click', () => { this.node.active = false; });
-        this.typeDropDown.SetNames(["手牌張數", "打出張數", "打出牌型", "起始牌型"]);
+        this.typeDropDown.SetNames(["手牌張數", "打出張數", "打出牌型", "起始牌型", "策略分佈", "策略比例"]);
         this.typeDropDown.OnChange = () => { this.updated = false; }
     }
 
     Reset (PlayerCount: number) {
         this.cardHistory = [];
+        this.playCount = [];
         this.playTypeCount = [];
         this.startTypeCount = [];
+        this.styleHistory = [];
+        this.styleTypeCount = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.cardHistory.push([]);
+            this.playCount.push(0);
             this.playTypeCount.push([]);
             this.startTypeCount.push([]);
+            this.styleHistory.push([]);
+            this.styleTypeCount.push([]);
             for (let j = 0; j < 10; j++) {
                 this.playTypeCount[i].push(0);
                 this.startTypeCount[i].push(0);
+            }
+            for (let j = 0; j <= 100; j++) {
+                this.styleHistory[i].push([0, 0, 0, 0]);
+            }
+            for (let j = 0; j < 4; j++) {
+                this.styleTypeCount[i].push(0);
             }
         }
         this.updated = true;
@@ -63,10 +78,24 @@ export default class Chart extends cc.Component {
         if (state.History && state.History.length > 0) {
             for (let i = 0; i < state.Config.PlayerCount; i++) {
                 let cardCounts: number[] = [];
+                let styleCounts: number[][] = [];
                 for (let j = 0; j < state.History.length; j++) {
                     cardCounts.push(countCard(state.History[j].PlayersCard[i]));
                     if (state.History[j].Index == i && state.History[j].ActionCard.Code > 0) {
                         this.playTypeCount[i][state.History[j].ActionCard.Type]++;
+                    }
+                    if (state.History[j].Index == i) {
+                        this.playCount[i]++;
+                        let find = false;
+                        for (let k = 0; k < state.History[j].Refer.Style.length; k++) {
+                            if (state.History[j].Refer.Style[k] > 0) {
+                                this.styleTypeCount[i][k]++;
+                                find = true;
+                            }
+                        }
+                        if (find) {
+                            styleCounts.push(state.History[j].Refer.Style);
+                        }
                     }
                 }
                 let data: number[] = [];
@@ -76,6 +105,15 @@ export default class Chart extends cc.Component {
                     let nextY = cardCounts[Math.ceil(X)];
                     let Y = prevY + (X - Math.floor(X)) * (nextY - prevY);
                     data.push(Y);
+                    if (styleCounts.length > 0) {
+                        for (let k = 0; k < 4; k++) {
+                            let X = j / 100 * (styleCounts.length - 1);
+                            let stylePrevY = styleCounts[Math.floor(X)][k];
+                            let stylenextY = styleCounts[Math.ceil(X)][k];
+                            let styleY = stylePrevY + (X - Math.floor(X)) * (stylenextY - stylePrevY);
+                            this.styleHistory[i][j][k] += styleY;
+                        }
+                    }
                 }
                 this.cardHistory[i].push(data);
             }
@@ -118,6 +156,12 @@ export default class Chart extends cc.Component {
                 break;
             case "起始牌型":
                 this.showStartType();
+                break;
+            case "策略分佈":
+                this.showStyle();
+                break;
+            case "策略比例":
+                this.showStyleRate();
                 break;
         }
         this.updated = true;
@@ -242,6 +286,53 @@ export default class Chart extends cc.Component {
             }
         }
         this.visualizer.DrawBarChart("平均次數", 5, data);
+    }
+
+    showStyle() {
+        this.visualizer.Clear();
+        let control: LineChartData = {
+            Color: cc.Color.RED,
+            Name: "進攻",
+            Value: [],
+        };
+        let secondary: LineChartData = {
+            Color: cc.Color.BLUE,
+            Name: "保守",
+            Value: [],
+        };
+        let fast: LineChartData = {
+            Color: cc.Color.GREEN,
+            Name: "快速",
+            Value: [],
+        };
+        let other: LineChartData = {
+            Color: cc.Color.BLACK,
+            Name: "其他",
+            Value: [],
+        };
+        for (let i = 0; i < 100; i++) {
+            control.Value.push(new cc.Vec2(i, this.styleHistory[this.playerIndex][i][0] / this.cardHistory[this.playerIndex].length));
+            secondary.Value.push(new cc.Vec2(i, this.styleHistory[this.playerIndex][i][1] / this.cardHistory[this.playerIndex].length));
+            fast.Value.push(new cc.Vec2(i, this.styleHistory[this.playerIndex][i][2] / this.cardHistory[this.playerIndex].length));
+            other.Value.push(new cc.Vec2(i, this.styleHistory[this.playerIndex][i][3] / this.cardHistory[this.playerIndex].length));
+        }
+        this.visualizer.DrawLineChart("時間(%)", "策略(比例)", 100, 1, [control, secondary, fast, other]);
+    }
+
+    showStyleRate() {
+        this.visualizer.Clear();
+        const name: string[] = ["進攻", "保守", "快速", "其他"];
+        let data: BarChartData[] = [];
+        for (let i = 0; i < name.length; i++) {
+            let cardType: BarChartData = {
+                Name: name[i],
+                Value: this.styleTypeCount[this.playerIndex][i] / this.playCount[this.playerIndex],
+            };
+            if (cardType.Value > 0) {
+                data.push(cardType);
+            }
+        }
+        this.visualizer.DrawBarChart("平均比例", 1, data);
     }
 }
 

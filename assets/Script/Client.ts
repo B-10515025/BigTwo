@@ -40,6 +40,13 @@ interface Log {
 	PlayersCard: number[];
 	Index: number;
 	ActionCard: CardSet;
+    Refer: ReferData;
+}
+
+interface ReferData {
+	Style: number[];
+	Reference: number;
+	ReferStyle: number[];
 }
 
 export interface State {
