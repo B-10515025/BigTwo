@@ -165,7 +165,7 @@ export class Visualizer extends cc.Mask {
         }
     }
 
-    DrawBarChart(name: string, range: number, data: BarChartData[]) {
+    DrawBarChart(name: string, range: number, data: BarChartData[], percentage: boolean) {
         const offsetX = this.node.width * 0.15, offsetY = this.node.height * 0.1, rangeWidth = this.node.width * 0.85, rangeHeight = this.node.height * 0.85;
         // draw axis
         const axisWidth = 10;
@@ -191,11 +191,18 @@ export class Visualizer extends cc.Mask {
         // draw data
         const dataWidth = 35;
         const dataColor = cc.Color.GREEN;
+        const dataMinsColor = cc.Color.RED;
         for (let i = 0; i < data.length; i++) {
             this.graphics.lineWidth = dataWidth;
-            this.graphics.strokeColor = dataColor;
-            this.graphics.moveTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY);
-            this.graphics.lineTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY + data[i].Value / range * rangeHeight);
+            if (data[i].Value < 0) {
+                this.graphics.strokeColor = dataMinsColor;
+                this.graphics.moveTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY);
+                this.graphics.lineTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY - data[i].Value / range * rangeHeight);
+            } else {
+                this.graphics.strokeColor = dataColor;
+                this.graphics.moveTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY);
+                this.graphics.lineTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY + data[i].Value / range * rangeHeight);
+            }
             this.graphics.stroke();
         }
         // axis text
@@ -244,6 +251,7 @@ export class Visualizer extends cc.Mask {
             scaleYLabel.enableWrapText = false;
         }
         // data text
+        
         const dataTextColor = cc.Color.RED;
         const dataTextSize = this.node.height * 0.05;
         let total = 0;
@@ -253,7 +261,7 @@ export class Visualizer extends cc.Mask {
         for (let i = 0; i < data.length; i++) {
             let dataLabelNode = new cc.Node("dataLabel")
             let dataLabel = dataLabelNode.addComponent(cc.Label);
-            let Y = offsetY + data[i].Value / range * rangeHeight;
+            let Y = offsetY + Math.abs(data[i].Value) / range * rangeHeight;
             if (Y > offsetY + rangeHeight - dataTextSize) {
                 Y = offsetY + rangeHeight - dataTextSize;
             }
@@ -261,10 +269,13 @@ export class Visualizer extends cc.Mask {
             dataLabelNode.setAnchorPoint(0.5, 0);
             dataLabelNode.color = dataTextColor;
             dataLabelNode.parent = this.graphics.node;
-            if (total == 0) {
-                dataLabel.string = "0%";
-            } else {
-                dataLabel.string = (Math.round(data[i].Value * 100) / 100).toString() + "\n(" + Math.round(data[i].Value / total * 10000) / 100 + "%)";
+            dataLabel.string = (Math.round(data[i].Value * 100) / 100).toString();
+            if (percentage) {
+                if (total == 0) {
+                    dataLabel.string += "\n0%";
+                } else {
+                    dataLabel.string += "\n(" + Math.round(data[i].Value / total * 10000) / 100 + "%)";
+                }
             }
             dataLabel.fontSize = dataTextSize;
             dataLabel.lineHeight = dataTextSize;

@@ -52,10 +52,6 @@ export default class TestResult extends cc.Component {
     failCount: number;
     totalWin: number[];
     totalScore: number[];
-    BestCount: number[];
-    totalBest: number[];
-    WorstCount: number[];
-    totalWorst: number[];
 
     onLoad () {
         //設定UI
@@ -88,17 +84,9 @@ export default class TestResult extends cc.Component {
         this.failCount = 0;
         this.totalWin = [];
         this.totalScore = [];
-        this.BestCount = [];
-        this.totalBest = [];
-        this.WorstCount = [];
-        this.totalWorst = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.totalWin.push(0);
             this.totalScore.push(0);
-            this.BestCount.push(0);
-            this.totalBest.push(0);
-            this.WorstCount.push(0);
-            this.totalWorst.push(0);
         }
         this.chart.Reset(PlayerCount);
         this.replay.Reset();
@@ -113,20 +101,9 @@ export default class TestResult extends cc.Component {
         for (let i = 0; i < PlayerCount; i++) {
             var player = cc.instantiate(this.playerPrefeb);
             player.children[0].getComponent(cc.Label).string = "Player " + (i + 1);
-            let avgBest = 0, avgWorst = 0;
-            if (this.BestCount[i] > 0) {
-                avgBest = this.totalBest[i] / this.BestCount[i];
-            }
-            if (this.WorstCount[i] > 0) {
-                avgWorst = this.totalWorst[i] / this.WorstCount[i];
-            }
             player.children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
-                "總分數:" + this.totalScore[i] + "\n" + 
-                "強牌場數:" + this.BestCount[i] + "\n" + 
-                "平均分(強):" + (avgBest).toFixed(3) + "\n" +
-                "弱牌場數:" + this.WorstCount[i] + "\n" + 
-                "平均分(弱):" + (avgWorst).toFixed(3);
+                "總分數:" + this.totalScore[i];
             player.children[2].on('click', () => {
                this.chart.OpenChart(i);
             });
@@ -165,13 +142,6 @@ export default class TestResult extends cc.Component {
                     this.totalWin[i] += 1
                 }
                 this.totalScore[i] += result.WinScores;
-                if (state.CardScore[i] < state.Threshold) {
-                    this.WorstCount[i]++;
-                    this.totalWorst[i] += result.WinScores;
-                } else {
-                    this.BestCount[i]++;
-                    this.totalBest[i] += result.WinScores;
-                }
             }
         } else {
             this.failCount++;
@@ -207,20 +177,9 @@ export default class TestResult extends cc.Component {
         this.roundLabel.string = "總場數: " + this.roundCount;
         this.failLabel.string = "錯誤場數: " + this.failCount;
         for (let i = 0; i < this.totalWin.length; i++) {
-            let avgBest = 0, avgWorst = 0;
-            if (this.BestCount[i] > 0) {
-                avgBest = this.totalBest[i] / this.BestCount[i];
-            }
-            if (this.WorstCount[i] > 0) {
-                avgWorst = this.totalWorst[i] / this.WorstCount[i];
-            }
             this.resultNode.children[0].children[i].children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
-                "總分數:" + this.totalScore[i] + "\n" + 
-                "強牌場數:" + this.BestCount[i] + "\n" + 
-                "平均分(強):" + (avgBest).toFixed(3) + "\n" +
-                "弱牌場數:" + this.WorstCount[i] + "\n" + 
-                "平均分(弱):" + (avgWorst).toFixed(3);
+                "總分數:" + this.totalScore[i];
         }
         this.updated = true;
     }

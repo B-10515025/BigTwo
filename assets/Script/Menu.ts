@@ -16,8 +16,17 @@ export default class Menu extends cc.Component {
     @property([DropDown])
     botSelectors: DropDown[] = [];
 
+    @property([cc.Label])
+    botStyleLabel: cc.Label[] = [];
+
     @property(DropDown)
     dealerSelectors: DropDown;
+
+    @property(DropDown)
+    styleSelectors: DropDown;
+
+    @property([cc.Slider])
+    styleSlider: cc.Slider[] = [];
     
     @property(cc.Button)
     confirmBotButton: cc.Button;
@@ -52,9 +61,15 @@ export default class Menu extends cc.Component {
         DoubleRate: 1,
         Rule: 0,
         BotName: [],
+        BotStyle: [[0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]],
         Dealer: "",
         Debug: [],
     };
+
+    playerIndex: number = 0;
 
     onLoad () {
         this.botNode.active = false;
@@ -64,6 +79,14 @@ export default class Menu extends cc.Component {
         this.setConfig();
         this.closeBotButton.node.on('click', () => { this.botNode.active = false; });
         this.confirmBotButton.node.on('click', () => { this.setSelect(); });
+        const name: string[] = ["Player1", "Player2", "Player3", "Player4"];
+        this.styleSelectors.SetNames(name);
+        for (let i = 0; i < this.styleSlider.length; i++) {
+            this.styleSlider[i].node.on("slide", (target: cc.Slider) => {
+                this.Config.BotStyle[name.indexOf(this.styleSelectors.GetCurrent())][i] = target.progress;
+                this.updateStyle();
+            })
+        }
         this.closeConfigButton.node.on('click', () => { this.configNode.active = false; });
         this.defaultIGSButton.node.on('click', () => { this.default_IGS() });
         this.defaultHHFButton.node.on('click', () => { this.default_HHF() });
@@ -74,6 +97,8 @@ export default class Menu extends cc.Component {
             this.Config.DoubleRate = Number(this.doubleRate.GetCurrent());
         }
         Client.SetCallback("test.name", (message: Message) => { this.updateSelector(JSON.parse(message.Data)) });
+        
+        
     }
 
     updateSelector(nameLists: NameLists) {
@@ -84,7 +109,18 @@ export default class Menu extends cc.Component {
         this.botNode.active = true;
     }
 
+    updateStyle() {
+        const name: string[] = ["控制加成: ", "保守加成: ", "組牌加成: ", "實力補正: "];
+        for (let i = 0; i < this.botStyleLabel.length; i++) {
+            this.botStyleLabel[i].string = "";
+            for (let j = 0; j < this.Config.BotStyle[i].length; j++) {
+                this.botStyleLabel[i].string += name[j] + this.Config.BotStyle[i][j].toFixed(3) + "\n";
+            }
+        }
+    }
+
     OpenBotMenu() {
+        this.updateStyle();
         Client.SendMessage("test.name", "");
     }
 

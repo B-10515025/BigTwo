@@ -10,6 +10,15 @@ export default class GameState extends cc.Component {
     @property(cc.Label)
     cardScoreLabel: cc.Label;
 
+    @property(cc.Label)
+    referDataLabel: cc.Label;
+
+    @property(cc.Node)
+    referPassNode: cc.Node;
+
+    @property(CardSet)
+    referCard: CardSet;
+
     @property([CardSet])
     playersCard: CardSet[] = [];
 
@@ -32,12 +41,43 @@ export default class GameState extends cc.Component {
         this.cardScoreLabel.string = "";
         for (let i = 0; i < state.CardScore.length; i++) {
             this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
-            if (state.CardScore[i] < state.Threshold) {
-                this.cardScoreLabel.string += "弱";
-            } else {
-                this.cardScoreLabel.string += "強";
+            let lv = state.Threshold.length + 1;
+            for (let j = 0; j < state.Threshold.length; j++) {
+                if (state.CardScore[i] < state.Threshold[j]) {
+                    lv = j + 1;
+                    break;
+                } 
             }
-            this.cardScoreLabel.string += "(" + state.CardScore[i].toFixed(3) + ")\n";
+            this.cardScoreLabel.string += "LV." + lv;
+            this.cardScoreLabel.string += " (" + state.CardScore[i].toFixed(3) + ")\n";
+        }
+        this.referDataLabel.string = "";
+        this.referPassNode.active = false;
+        this.referCard.SetCard(0, false);
+        if (state.LastIndex >= 0) {
+            let style: string;
+            const name: string[] = ["控制", "保守", "組牌", "其他"];
+            style = "無選擇";
+            for (let i = 0; i < state.ReferCurrent.Style.length; i++) {
+                if (state.ReferCurrent.Style[i] > 0) {
+                    style = name[i];
+                    break;
+                }
+            }
+            this.referDataLabel.string += "目前策略: " + style + "\n";
+            style = "無選擇";
+            for (let i = 0; i < state.ReferCurrent.ReferStyle.length; i++) {
+                if (state.ReferCurrent.ReferStyle[i] > 0) {
+                    style = name[i];
+                    break;
+                }
+            }
+            this.referDataLabel.string += "推薦策略: " + style + "\n" + "推薦出牌:";
+            if (state.ReferCurrent.Reference > 0) {
+                this.referCard.SetCard(state.ReferCurrent.Reference, false);
+            } else {
+                this.referPassNode.active = true;
+            }
         }
         this.Reset();
         for (let i = 0; i < state.PlayersCard.length; i++) {

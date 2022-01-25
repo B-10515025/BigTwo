@@ -13,6 +13,7 @@ export interface Config {
     DoubleRate: number;
 	Rule: number;
 	BotName: string[];
+    BotStyle: number[][];
     Dealer: string;
     Debug: number[];
 }
@@ -53,13 +54,15 @@ export interface State {
 	Config: Config;
 	PlayersCard: number[];
 	PlayingIndex: number;
+    LastIndex: number;
 	PerviousCard: number[];
 	IsFirstResult: boolean;
 	PlayersResult: Result[];
 	History: Log[];
     StartType: number[][];
     CardScore: number[];
-    Threshold: number;
+    Threshold: number[];
+    ReferCurrent: ReferData;
 }
 
 export interface Action {

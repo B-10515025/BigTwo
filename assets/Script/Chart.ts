@@ -32,6 +32,8 @@ export default class Chart extends cc.Component {
     startTypeCount: number[][];
     styleHistory: number[][][];
     styleTypeCount: number[][];
+    rankCount: number[][];
+    rankScore: number[][];
 
     playerIndex: number;
 
@@ -40,7 +42,7 @@ export default class Chart extends cc.Component {
         this.updateCount = 0;
         //設定UI
         this.closeButton.node.on('click', () => { this.node.active = false; });
-        this.typeDropDown.SetNames(["手牌張數", "打出張數", "打出牌型", "起始牌型", "策略分佈", "策略比例"]);
+        this.typeDropDown.SetNames(["手牌張數", "打出張數", "打出牌型", "起始牌型", "策略分佈", "策略比例", "階級平均分數"]);
         this.typeDropDown.OnChange = () => { this.updated = false; }
     }
 
@@ -51,6 +53,8 @@ export default class Chart extends cc.Component {
         this.startTypeCount = [];
         this.styleHistory = [];
         this.styleTypeCount = [];
+        this.rankCount = [];
+        this.rankScore = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.cardHistory.push([]);
             this.playCount.push(0);
@@ -58,9 +62,13 @@ export default class Chart extends cc.Component {
             this.startTypeCount.push([]);
             this.styleHistory.push([]);
             this.styleTypeCount.push([]);
+            this.rankCount.push([]);
+            this.rankScore.push([]);
             for (let j = 0; j < 10; j++) {
                 this.playTypeCount[i].push(0);
                 this.startTypeCount[i].push(0);
+                this.rankCount[i].push(0);
+                this.rankScore[i].push(0);
             }
             for (let j = 0; j <= 100; j++) {
                 this.styleHistory[i].push([0, 0, 0, 0]);
@@ -116,6 +124,15 @@ export default class Chart extends cc.Component {
                     }
                 }
                 this.cardHistory[i].push(data);
+                let lv = state.Threshold.length;
+                for (let j = 0; j < state.Threshold.length; j++) {
+                    if (state.CardScore[i] < state.Threshold[j]) {
+                        lv = j;
+                        break;
+                    } 
+                }
+                this.rankCount[i][lv]++;
+                this.rankScore[i][lv] += state.PlayersResult[i].WinScores;
             }
         }
         for (let i = 0; i < state.StartType.length; i++) {
@@ -163,6 +180,9 @@ export default class Chart extends cc.Component {
             case "策略比例":
                 this.showStyleRate();
                 break;
+            case "階級平均分數":
+                this.showRankScore();
+                break
         }
         this.updated = true;
         this.updateCount = 0;
@@ -269,7 +289,7 @@ export default class Chart extends cc.Component {
                 data.push(cardType);
             }
         }
-        this.visualizer.DrawBarChart("平均次數", 5, data);
+        this.visualizer.DrawBarChart("平均次數", 5, data, true);
     }
 
     showStartType() {
@@ -285,14 +305,14 @@ export default class Chart extends cc.Component {
                 data.push(cardType);
             }
         }
-        this.visualizer.DrawBarChart("平均次數", 5, data);
+        this.visualizer.DrawBarChart("平均次數", 5, data, true);
     }
 
     showStyle() {
         this.visualizer.Clear();
         let control: LineChartData = {
             Color: cc.Color.RED,
-            Name: "進攻",
+            Name: "控制",
             Value: [],
         };
         let secondary: LineChartData = {
@@ -302,7 +322,7 @@ export default class Chart extends cc.Component {
         };
         let fast: LineChartData = {
             Color: cc.Color.GREEN,
-            Name: "快速",
+            Name: "組牌",
             Value: [],
         };
         let other: LineChartData = {
@@ -321,18 +341,31 @@ export default class Chart extends cc.Component {
 
     showStyleRate() {
         this.visualizer.Clear();
-        const name: string[] = ["進攻", "保守", "快速", "其他"];
+        const name: string[] = ["控制", "保守", "組牌", "其他"];
         let data: BarChartData[] = [];
         for (let i = 0; i < name.length; i++) {
-            let cardType: BarChartData = {
+            let styleType: BarChartData = {
                 Name: name[i],
                 Value: this.styleTypeCount[this.playerIndex][i] / this.playCount[this.playerIndex],
             };
-            if (cardType.Value > 0) {
-                data.push(cardType);
+            if (styleType.Value > 0) {
+                data.push(styleType);
             }
         }
-        this.visualizer.DrawBarChart("平均比例", 1, data);
+        this.visualizer.DrawBarChart("平均比例", 1, data, true);
+    }
+
+    showRankScore() {
+        this.visualizer.Clear();
+        let data: BarChartData[] = [];
+        for (let i = 0; i < 10; i++) {
+            let rankType: BarChartData = {
+                Name: "LV." + (i + 1),
+                Value: this.rankScore[this.playerIndex][i] / this.rankCount[this.playerIndex][i],
+            };
+            data.push(rankType);
+        }
+        this.visualizer.DrawBarChart("平均分數", 20, data, false);
     }
 }
 
