@@ -75,6 +75,11 @@ export interface TestConfig {
 	Count: number;
 }
 
+export interface RecordData {
+    Key: number;
+	Comment: string;
+}
+
 export interface NameLists {
     BotNameList: string[];
 	DealerNameList: string[];

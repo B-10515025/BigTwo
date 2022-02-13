@@ -94,8 +94,8 @@ export default class Menu extends cc.Component {
             })
         }
         this.closeConfigButton.node.on('click', () => { this.configNode.active = false; });
-        this.defaultIGSButton.node.on('click', () => { this.default_IGS() });
-        this.defaultHHFButton.node.on('click', () => { this.default_HHF() });
+        this.defaultIGSButton.node.on('click', () => { this.default_IGS(); });
+        this.defaultHHFButton.node.on('click', () => { this.default_HHF(); });
         this.confirmConfigButton.node.on('click', () => { this.setConfig(); });
         this.doubleRate.SetNames(["0", "1", "2", "3", "4", "5"]);
         this.doubleRate.SetCurrent("1");
@@ -103,8 +103,6 @@ export default class Menu extends cc.Component {
             this.Config.DoubleRate = Number(this.doubleRate.GetCurrent());
         }
         Client.SetCallback("test.name", (message: Message) => { this.updateSelector(JSON.parse(message.Data)) });
-        
-        
     }
 
     updateSelector(nameLists: NameLists) {
