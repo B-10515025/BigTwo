@@ -81,6 +81,12 @@ export default class Menu extends cc.Component {
         this.confirmBotButton.node.on('click', () => { this.setSelect(); });
         const name: string[] = ["Player1", "Player2", "Player3", "Player4"];
         this.styleSelectors.SetNames(name);
+        this.styleSelectors.OnChange = () => {
+            for (let i = 0; i < this.styleSlider.length; i++) {
+                this.Config.BotStyle[name.indexOf(this.styleSelectors.GetCurrent())][i] = this.styleSlider[i].progress;
+            }
+            this.updateStyle();
+        }
         for (let i = 0; i < this.styleSlider.length; i++) {
             this.styleSlider[i].node.on("slide", (target: cc.Slider) => {
                 this.Config.BotStyle[name.indexOf(this.styleSelectors.GetCurrent())][i] = target.progress;
