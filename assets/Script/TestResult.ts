@@ -52,6 +52,8 @@ export default class TestResult extends cc.Component {
     failCount: number;
     totalWin: number[];
     totalScore: number[];
+    winScore: number[];
+    lossScore: number[];
 
     onLoad () {
         //設定UI
@@ -84,9 +86,13 @@ export default class TestResult extends cc.Component {
         this.failCount = 0;
         this.totalWin = [];
         this.totalScore = [];
+        this.winScore = [];
+        this.lossScore = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.totalWin.push(0);
             this.totalScore.push(0);
+            this.winScore.push(0);
+            this.lossScore.push(0);
         }
         this.chart.Reset(PlayerCount);
         this.replay.Reset();
@@ -103,7 +109,10 @@ export default class TestResult extends cc.Component {
             player.children[0].getComponent(cc.Label).string = "Player " + (i + 1);
             player.children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
-                "總分數:" + this.totalScore[i];
+                "總分數:" + this.totalScore[i] + "\n" + 
+                "總贏分:" + this.winScore[i] + "\n" + 
+                "總輸分:" + this.lossScore[i] + "\n" + 
+                "RTP:" + (this.winScore[i] / this.lossScore[i]).toFixed(3);
             player.children[2].on('click', () => {
                this.chart.OpenChart(i);
             });
@@ -139,7 +148,10 @@ export default class TestResult extends cc.Component {
             for (let i = 0; i < state.PlayersResult.length; i++) {
                 let result: Result = state.PlayersResult[i];
                 if (result.WinScores > 0) {
-                    this.totalWin[i] += 1
+                    this.totalWin[i] += 1;
+                    this.winScore[i] += result.WinScores;
+                } else {
+                    this.lossScore[i] += result.WinScores;
                 }
                 this.totalScore[i] += result.WinScores;
             }
@@ -179,7 +191,10 @@ export default class TestResult extends cc.Component {
         for (let i = 0; i < this.totalWin.length; i++) {
             this.resultNode.children[0].children[i].children[1].getComponent(cc.Label).string = 
                 "總勝場:" + this.totalWin[i] + "\n" + 
-                "總分數:" + this.totalScore[i];
+                "總分數:" + this.totalScore[i] + "\n" + 
+                "總贏分:" + this.winScore[i] + "\n" + 
+                "總輸分:" + this.lossScore[i] + "\n" + 
+                "RTP:" + (this.winScore[i] / this.lossScore[i]).toFixed(3);
         }
         this.updated = true;
     }
