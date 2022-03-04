@@ -1,5 +1,7 @@
+import CardSet from "./CardSet"
 import { Client, Config, Message, NameLists } from "./Client"
 import DropDown from "./DropDown"
+import TestResult from "./TestResult";
 
 const {ccclass, property} = cc._decorator;
 
@@ -56,6 +58,41 @@ export default class Menu extends cc.Component {
     @property(DropDown)
     doubleRate: DropDown;
 
+    // Replay
+    @property(TestResult)
+    gameResult: TestResult;
+
+    // Debug
+    @property(cc.Button)
+    editButton: cc.Button;
+
+    @property(cc.Node)
+    editNode: cc.Node;
+
+    @property(DropDown)
+    cardSelectors: DropDown;
+
+    @property(cc.Button)
+    pushButton: cc.Button;
+    
+    @property(cc.Button)
+    popButton: cc.Button;
+
+    @property(cc.Button)
+    flushButton: cc.Button;
+
+    @property(cc.Button)
+    clearButton: cc.Button;
+
+    @property(CardSet)
+    deckCard: CardSet;
+
+    @property([CardSet])
+    playersCard: CardSet[] = [];
+
+    @property(cc.Button)
+    closeEditButton: cc.Button;
+
     Config: Config = {
         PlayerCount: 0,
         DoubleRate: 1,
@@ -66,7 +103,7 @@ export default class Menu extends cc.Component {
             [0, 0, 0, 0],
             [0, 0, 0, 0]],
         Dealer: "",
-        Debug: [],
+        Debug: [0, 0, 0, 0],
     };
 
     playerIndex: number = 0;
@@ -103,6 +140,46 @@ export default class Menu extends cc.Component {
             this.Config.DoubleRate = Number(this.doubleRate.GetCurrent());
         }
         Client.SetCallback("test.name", (message: Message) => { this.updateSelector(JSON.parse(message.Data)) });
+        // Clear Game Replay
+        this.gameResult.OpenResult(this.Config.PlayerCount, this.Config);
+        this.gameResult.node.active = false;
+        // Debug CardSet
+        this.editButton.node.on('click', () => { this.editNode.active = true; });
+        this.pushButton.node.on('click', () => {
+            let index = name.indexOf(this.cardSelectors.GetCurrent());
+            let card = this.deckCard.Choose;
+            this.deckCard.SetCard(this.deckCard.Code - card, true, false);
+            this.playersCard[index].SetCard(this.playersCard[index].Code + card, true, false);
+        });
+        this.popButton.node.on('click', () => {
+            let index = name.indexOf(this.cardSelectors.GetCurrent());
+            let card = this.playersCard[index].Choose;
+            this.deckCard.SetCard(this.deckCard.Code + card, true, false);
+            this.playersCard[index].SetCard(this.playersCard[index].Code - card, true, false);
+        });
+        this.flushButton.node.on('click', () => {
+            let index = name.indexOf(this.cardSelectors.GetCurrent());
+            let card = this.deckCard.Code;
+            this.deckCard.SetCard(this.deckCard.Code - card, true, false);
+            this.playersCard[index].SetCard(this.playersCard[index].Code + card, true, false);
+        });
+        this.clearButton.node.on('click', () => {
+            let index = name.indexOf(this.cardSelectors.GetCurrent());
+            let card = this.playersCard[index].Code;
+            this.deckCard.SetCard(this.deckCard.Code + card, true, false);
+            this.playersCard[index].SetCard(this.playersCard[index].Code - card, true, false);
+        });
+        this.closeEditButton.node.on('click', () => {
+            for (let i = 0; i < this.playersCard.length; i++) {
+                this.Config.Debug[i] = this.playersCard[i].Code;
+            }
+            this.editNode.active = false; 
+        });
+        this.cardSelectors.SetNames(name);
+        this.deckCard.SetCard(Math.pow(2, 52) - 1, true, false);
+        for (let i = 0; i < this.playersCard.length; i++) {
+            this.playersCard[i].SetCard(0, true, false);
+        }
     }
 
     updateSelector(nameLists: NameLists) {

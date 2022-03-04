@@ -12,6 +12,9 @@ export default class TestResult extends cc.Component {
     countEditBox: cc.EditBox;
 
     @property(cc.Button)
+    clearButton: cc.Button;
+
+    @property(cc.Button)
     againButton: cc.Button;
 
     @property(cc.Button)
@@ -57,14 +60,21 @@ export default class TestResult extends cc.Component {
 
     onLoad () {
         //設定UI
-        this.againButton.node.on('click', () => { this.testBegin(false) });
+        if (this.clearButton) {
+            this.clearButton.node.on('click', () => { this.OpenResult(this.config.PlayerCount, this.config) });
+        }
+        if (this.againButton) {
+            this.againButton.node.on('click', () => { this.testBegin(false) });
+        }
         this.logButton.node.on('click', () => { this.replay.Open() });
-        this.backendButton.node.on('click', () => { this.testBegin(true) });
+        if (this.backendButton) {
+            this.backendButton.node.on('click', () => { this.testBegin(true) });
+        }
         this.closeButton.node.on('click', () => { this.resultNode.active = false });
         // 設定Client Callback
         Client.SetCallback("test.result", (message: Message) => {
             let state: State = JSON.parse(message.Data);
-            this.testUpdate(state);
+            this.TestUpdate(state);
         });
         Client.SetCallback("test.result.backend", (message: Message) => {
             this.IsTesting = true;
@@ -139,7 +149,7 @@ export default class TestResult extends cc.Component {
         this.updated = false;
     }
  
-    testUpdate(state: State) {
+    TestUpdate(state: State) {
         this.IsTesting = true;
         this.updated = false;
         this.roundCount++;
@@ -181,9 +191,13 @@ export default class TestResult extends cc.Component {
         if (this.updated) {
             return;
         }
-        this.againButton.node.active = !this.IsTesting;
+        if (this.againButton) {
+            this.againButton.node.active = !this.IsTesting;
+        }
         this.logButton.node.active = !this.IsTesting;
-        this.backendButton.node.active = !this.IsTesting;
+        if (this.backendButton) {
+            this.backendButton.node.active = !this.IsTesting;
+        }
         this.closeButton.node.active = !this.IsTesting;
         // 更新UI
         this.roundLabel.string = "總場數: " + this.roundCount;

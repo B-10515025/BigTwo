@@ -9,7 +9,7 @@ export default class CardSet extends cc.Component {
     Code: number;
     Choose: number;
 
-    SetCard(code: number, click: boolean) {
+    SetCard(code: number, click: boolean, hidden: boolean) {
         this.Code = code;
         this.Choose = 0;
         this.node.destroyAllChildren();
@@ -22,10 +22,13 @@ export default class CardSet extends cc.Component {
                 let card = new cc.Node(name);
                 let sprite = card.addComponent(cc.Sprite);
                 sprite.spriteFrame = this.cardAtlas.getSpriteFrame(name);
+                if (hidden) {
+                    sprite.spriteFrame = this.cardAtlas.getSpriteFrame("cardback");
+                }
                 card.parent = this.node;
                 card.setPosition(0, 0);
                 startX -= Width;
-                if (click) {
+                if (click && !hidden) {
                     card.addComponent(cc.Button);
                     card.on('click', (button) => {
                         button.node.setPosition(button.node.x, (button.node.y + Height) % (Height * 2));

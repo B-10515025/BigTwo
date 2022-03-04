@@ -6,6 +6,9 @@ const {ccclass, property} = cc._decorator;
 @ccclass
 export default class Record extends cc.Component {
 
+    @property(cc.Node)
+    boxNode: cc.Node;
+
     @property(cc.Button)
     closeConfigButton: cc.Button;
 
@@ -24,7 +27,7 @@ export default class Record extends cc.Component {
     recordList: RecordData[];
 
     onLoad(): void {
-        this.closeConfigButton.node.on('click', () => { this.node.active = false; });
+        this.closeConfigButton.node.on('click', () => { this.boxNode.active = false; });
         this.saveButton.node.on('click', () => { this.saveRecord(); });
         this.loadButton.node.on('click', () => { this.loadRecord(); });
         this.stateList.OnChange = () => {
@@ -41,11 +44,10 @@ export default class Record extends cc.Component {
                 keys.push(this.recordList[i].Key);
             }
             this.stateList.SetNames(keys);
-            this.node.active = true;
+            this.boxNode.active = true;
         });
         Client.SetCallback("game.save", (message: Message) => { alert("record saved"); });
         Client.SetCallback("game.load", (message: Message) => { alert("record loaded"); });
-        this.node.active = false;
     }
 
     OpenRecord() {

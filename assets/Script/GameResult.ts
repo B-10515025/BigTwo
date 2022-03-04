@@ -46,7 +46,7 @@ export default class GameResult extends cc.Component {
             this.resultNode.children[0].children[i].active = true;
             this.resultNode.children[0].children[i].children[0].active = false;
             this.resultNode.children[0].children[i].children[1].getComponent(cc.Label).string = "Player " + (i + 1);
-            this.resultNode.children[0].children[i].children[2].getComponent(CardSet).SetCard(result.Cards, false);
+            this.resultNode.children[0].children[i].children[2].getComponent(CardSet).SetCard(result.Cards, false, false);
             if (result.WinScores > 0) {
                 this.resultNode.children[0].children[i].children[3].getComponent(cc.Sprite).spriteFrame = this.lastSprite;
                 this.resultNode.children[0].children[i].children[3].children[0].getComponent(cc.Label).string = "";

@@ -1,6 +1,7 @@
 import CardSet from "./CardSet"
-import { State, Action } from "./Client"
+import { Action, Client, State } from "./Client"
 import GameResult from "./GameResult"
+import TestResult from "./TestResult";
 
 const {ccclass, property} = cc._decorator;
 
@@ -34,54 +35,65 @@ export default class GameState extends cc.Component {
     @property(GameResult)
     result: GameResult;
 
+    @property(TestResult)
+    replay: TestResult;
+
     state: State;
+    Playing: boolean;
 
     SetGameState (state: State) {
         this.state = state;
-        this.cardScoreLabel.string = "";
-        for (let i = 0; i < state.CardScore.length; i++) {
-            this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
-            let lv = state.Threshold.length + 1;
-            for (let j = 0; j < state.Threshold.length; j++) {
-                if (state.CardScore[i] < state.Threshold[j]) {
-                    lv = j + 1;
-                    break;
-                } 
+        if (this.cardScoreLabel && !this.Playing) {
+            this.cardScoreLabel.string = "";
+            for (let i = 0; i < state.CardScore.length; i++) {
+                this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
+                let lv = state.Threshold.length + 1;
+                for (let j = 0; j < state.Threshold.length; j++) {
+                    if (state.CardScore[i] < state.Threshold[j]) {
+                        lv = j + 1;
+                        break;
+                    } 
+                }
+                this.cardScoreLabel.string += "LV." + lv;
+                this.cardScoreLabel.string += " (" + state.CardScore[i].toFixed(3) + ")\n";
             }
-            this.cardScoreLabel.string += "LV." + lv;
-            this.cardScoreLabel.string += " (" + state.CardScore[i].toFixed(3) + ")\n";
-        }
-        this.referDataLabel.string = "";
-        this.referPassNode.active = false;
-        this.referCard.SetCard(0, false);
-        if (state.LastIndex >= 0) {
-            let style: string;
-            const name: string[] = ["控制", "保守", "組牌", "其他"];
-            style = "無選擇";
-            for (let i = 0; i < state.ReferCurrent.Style.length; i++) {
-                if (state.ReferCurrent.Style[i] > 0) {
-                    style = name[i];
-                    break;
+            this.referDataLabel.string = "";
+            this.referPassNode.active = false;
+            this.referCard.SetCard(0, false, false);
+            if (state.LastIndex >= 0) {
+                let style: string;
+                const name: string[] = ["控制", "保守", "組牌", "其他"];
+                style = "無選擇";
+                for (let i = 0; i < state.ReferCurrent.Style.length; i++) {
+                    if (state.ReferCurrent.Style[i] > 0) {
+                        style = name[i];
+                        break;
+                    }
+                }
+                this.referDataLabel.string += "目前策略: " + style + "\n";
+                style = "無選擇";
+                for (let i = 0; i < state.ReferCurrent.ReferStyle.length; i++) {
+                    if (state.ReferCurrent.ReferStyle[i] > 0) {
+                        style = name[i];
+                        break;
+                    }
+                }
+                this.referDataLabel.string += "推薦策略: " + style + "\n" + "推薦出牌:";
+                if (state.ReferCurrent.Reference > 0) {
+                    this.referCard.SetCard(state.ReferCurrent.Reference, false, false);
+                } else {
+                    this.referPassNode.active = true;
                 }
             }
-            this.referDataLabel.string += "目前策略: " + style + "\n";
-            style = "無選擇";
-            for (let i = 0; i < state.ReferCurrent.ReferStyle.length; i++) {
-                if (state.ReferCurrent.ReferStyle[i] > 0) {
-                    style = name[i];
-                    break;
-                }
-            }
-            this.referDataLabel.string += "推薦策略: " + style + "\n" + "推薦出牌:";
-            if (state.ReferCurrent.Reference > 0) {
-                this.referCard.SetCard(state.ReferCurrent.Reference, false);
-            } else {
-                this.referPassNode.active = true;
-            }
+        } else if (this.cardScoreLabel) {
+            this.cardScoreLabel.string = "";
+            this.referDataLabel.string = "";
+            this.referPassNode.active = false;
+            this.referCard.SetCard(0, false, false);
         }
         this.Reset();
         for (let i = 0; i < state.PlayersCard.length; i++) {
-            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex);
+            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex, i > 0 && this.Playing);
         }
         for (let i = 0; i < state.PerviousCard.length; i++) {
             if (i == state.PlayingIndex) {
@@ -89,29 +101,44 @@ export default class GameState extends cc.Component {
             } else if (state.PerviousCard[i] == 0) {
                 this.passNode[seatIndex(i, state.PerviousCard.length)].active = true;
             } else if (state.PerviousCard[i] > 0) {
-                this.perviousCard[seatIndex(i, state.PerviousCard.length)].SetCard(state.PerviousCard[i], false);
+                this.perviousCard[seatIndex(i, state.PerviousCard.length)].SetCard(state.PerviousCard[i], false, false);
             }
         }
         const RuleDoubleMultiply = 1 << 28;
         if (state.PlayersResult.length > 0) {
             this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply, state.IsFirstResult);
+            if (state.IsFirstResult) {
+                this.replay.TestUpdate(state);
+                this.replay.IsTesting = false;
+            }
         } else {
             this.result.node.active = false;
+            if (this.Playing && state.PlayingIndex > 0) {
+                setTimeout(()=>{
+                    Client.SendMessage("game.next", "");
+                }, 1000);
+            }
         }
     }
 
     Reset() {
         for (let i = 0;i < this.playersCard.length; i++) {
-            this.playersCard[i].SetCard(0, false);
+            this.playersCard[i].SetCard(0, false, false);
         }
         for (let i = 0;i < this.perviousCard.length; i++) {
-            this.perviousCard[i].SetCard(0, false);
+            this.perviousCard[i].SetCard(0, false, false);
         }
         for (let i = 0;i < this.passNode.length; i++) {
             this.passNode[i].active = false;
         }
         for (let i = 0;i < this.timerNode.length; i++) {
             this.timerNode[i].active = false;
+        }
+    }
+
+    Refresh() {
+        if (this.state) {
+            this.SetGameState(this.state);
         }
     }
 
