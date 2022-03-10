@@ -8,6 +8,12 @@ const {ccclass, property} = cc._decorator;
 @ccclass
 export default class GameState extends cc.Component {
 
+    @property(cc.Node)
+    aiNameNode: cc.Node;
+
+    @property([cc.Label])
+    aiNameLabel: cc.Label[] = [];
+
     @property(cc.Label)
     cardScoreLabel: cc.Label;
 
@@ -43,6 +49,13 @@ export default class GameState extends cc.Component {
 
     SetGameState (state: State) {
         this.state = state;
+        this.aiNameNode.active = this.Playing;
+        for (let i = 1; i < this.aiNameLabel.length; i++) {
+            this.aiNameLabel[i].string = "";
+        }
+        for (let i = 1; i < state.Config.PlayerCount; i++) {
+            this.aiNameLabel[seatIndex(i, state.Config.PlayerCount) - 1].string = state.Config.BotName[i];
+        }
         if (this.cardScoreLabel && !this.Playing) {
             this.cardScoreLabel.string = "";
             for (let i = 0; i < state.CardScore.length; i++) {
@@ -110,6 +123,7 @@ export default class GameState extends cc.Component {
             if (state.IsFirstResult) {
                 this.replay.TestUpdate(state);
                 this.replay.IsTesting = false;
+                Client.SendMessage("game.save", "自動儲存" + new Date().toLocaleString());
             }
         } else {
             this.result.node.active = false;
@@ -138,6 +152,7 @@ export default class GameState extends cc.Component {
 
     Refresh() {
         if (this.state) {
+            this.state.IsFirstResult = false;
             this.SetGameState(this.state);
         }
     }

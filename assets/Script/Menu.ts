@@ -180,6 +180,10 @@ export default class Menu extends cc.Component {
         for (let i = 0; i < this.playersCard.length; i++) {
             this.playersCard[i].SetCard(0, true, false);
         }
+        for (let i = 0; i < this.botSelectors.length; i++) {
+            this.botSelectors[i].SetCurrent("Rule-BasedAIV2");
+        }
+        this.setSelect();
     }
 
     updateSelector(nameLists: NameLists) {
