@@ -49,12 +49,14 @@ export default class GameState extends cc.Component {
 
     SetGameState (state: State) {
         this.state = state;
-        this.aiNameNode.active = this.Playing;
-        for (let i = 1; i < this.aiNameLabel.length; i++) {
-            this.aiNameLabel[i].string = "";
-        }
-        for (let i = 1; i < state.Config.PlayerCount; i++) {
-            this.aiNameLabel[seatIndex(i, state.Config.PlayerCount) - 1].string = state.Config.BotName[i];
+        if (this.aiNameNode) {
+            this.aiNameNode.active = this.Playing;
+            for (let i = 1; i < this.aiNameLabel.length; i++) {
+                this.aiNameLabel[i].string = "";
+            }
+            for (let i = 1; i < state.Config.PlayerCount; i++) {
+                this.aiNameLabel[seatIndex(i, state.Config.PlayerCount) - 1].string = state.Config.BotName[i];
+            }
         }
         if (this.cardScoreLabel && !this.Playing) {
             this.cardScoreLabel.string = "";
