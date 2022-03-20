@@ -72,6 +72,12 @@ export default class Menu extends cc.Component {
     @property(DropDown)
     cardSelectors: DropDown;
 
+    @property(cc.EditBox)
+    codeEditBox: cc.EditBox;
+
+    @property(cc.Button)
+    applyButton: cc.Button;
+
     @property(cc.Button)
     pushButton: cc.Button;
     
@@ -145,6 +151,12 @@ export default class Menu extends cc.Component {
         this.gameResult.node.active = false;
         // Debug CardSet
         this.editButton.node.on('click', () => { this.editNode.active = true; });
+        this.applyButton.node.on('click', () => {
+            let code = JSON.parse(this.codeEditBox.string);
+            for (let i = 0; i < code.length; i++) {
+                this.playersCard[i].SetCard(code[i], true, false);
+            }
+        });
         this.pushButton.node.on('click', () => {
             let index = name.indexOf(this.cardSelectors.GetCurrent());
             let card = this.deckCard.Choose;
