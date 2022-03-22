@@ -149,7 +149,7 @@ export default class Replay extends cc.Component {
             }
             row.push(count);
         }
-        row.push((lastCard / 4) % 2);
+        row.push(Math.floor(lastCard / 4) % 2);
         row.push(0);
         this.replayRows.push(row);
         this.replayState.push(state);
