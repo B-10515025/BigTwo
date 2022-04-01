@@ -57,4 +57,25 @@ export default class CardSet extends cc.Component {
         }
     }
     
+    ChooseCard(code: number): void {
+        const Height = 20;
+        let arr = [];
+        for (let i = 0; i < 52 && code > 0; i++) {
+            if (code % 2) {
+                arr.push(i);
+            }
+            code = Math.floor(code / 2);
+        }
+        this.Choose = 0;
+        for (let i = 0; i < this.node.children.length; i++) {
+            let index = Number(this.node.children[i].getComponent(cc.Sprite).spriteFrame.name)
+            if (arr.indexOf(index) < 0) {
+                this.node.children[i].setPosition(this.node.children[i].x, 0);
+            } else {
+                this.node.children[i].setPosition(this.node.children[i].x, Height);
+                this.Choose += Math.pow(2, index);
+            }
+        }
+    }
+
 }

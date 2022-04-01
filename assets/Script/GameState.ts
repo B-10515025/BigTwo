@@ -1,30 +1,11 @@
 import CardSet from "./CardSet"
 import { Action, Client, State } from "./Client"
 import GameResult from "./GameResult"
-import TestResult from "./TestResult";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
 export default class GameState extends cc.Component {
-
-    @property(cc.Node)
-    aiNameNode: cc.Node;
-
-    @property([cc.Label])
-    aiNameLabel: cc.Label[] = [];
-
-    @property(cc.Label)
-    cardScoreLabel: cc.Label;
-
-    @property(cc.Label)
-    referDataLabel: cc.Label;
-
-    @property(cc.Node)
-    referPassNode: cc.Node;
-
-    @property(CardSet)
-    referCard: CardSet;
 
     @property([CardSet])
     playersCard: CardSet[] = [];
@@ -41,74 +22,15 @@ export default class GameState extends cc.Component {
     @property(GameResult)
     result: GameResult;
 
-    @property(TestResult)
-    replay: TestResult;
-
     state: State;
-    Playing: boolean;
+    hintIndex: number = 0;
 
     SetGameState (state: State) {
         this.state = state;
-        if (this.aiNameNode) {
-            this.aiNameNode.active = this.Playing;
-            for (let i = 1; i < this.aiNameLabel.length; i++) {
-                this.aiNameLabel[i].string = "";
-            }
-            for (let i = 1; i < state.Config.PlayerCount; i++) {
-                this.aiNameLabel[seatIndex(i, state.Config.PlayerCount) - 1].string = state.Config.BotName[i];
-            }
-        }
-        if (this.cardScoreLabel && !this.Playing) {
-            this.cardScoreLabel.string = "";
-            for (let i = 0; i < state.CardScore.length; i++) {
-                this.cardScoreLabel.string += "Player" + (i + 1) + ": ";
-                let lv = state.Threshold.length + 1;
-                for (let j = 0; j < state.Threshold.length; j++) {
-                    if (state.CardScore[i] < state.Threshold[j]) {
-                        lv = j + 1;
-                        break;
-                    } 
-                }
-                this.cardScoreLabel.string += "LV." + lv;
-                this.cardScoreLabel.string += " (" + state.CardScore[i].toFixed(3) + ")\n";
-            }
-            this.referDataLabel.string = "";
-            this.referPassNode.active = false;
-            this.referCard.SetCard(0, false, false);
-            if (state.LastIndex >= 0) {
-                let style: string;
-                const name: string[] = ["控制", "保守", "組牌", "其他"];
-                style = "無選擇";
-                for (let i = 0; i < state.ReferCurrent.Style.length; i++) {
-                    if (state.ReferCurrent.Style[i] > 0) {
-                        style = name[i];
-                        break;
-                    }
-                }
-                this.referDataLabel.string += "目前策略: " + style + "\n";
-                style = "無選擇";
-                for (let i = 0; i < state.ReferCurrent.ReferStyle.length; i++) {
-                    if (state.ReferCurrent.ReferStyle[i] > 0) {
-                        style = name[i];
-                        break;
-                    }
-                }
-                this.referDataLabel.string += "推薦策略: " + style + "\n" + "推薦出牌:";
-                if (state.ReferCurrent.Reference > 0) {
-                    this.referCard.SetCard(state.ReferCurrent.Reference, false, false);
-                } else {
-                    this.referPassNode.active = true;
-                }
-            }
-        } else if (this.cardScoreLabel) {
-            this.cardScoreLabel.string = "";
-            this.referDataLabel.string = "";
-            this.referPassNode.active = false;
-            this.referCard.SetCard(0, false, false);
-        }
+        this.hintIndex = 0;
         this.Reset();
         for (let i = 0; i < state.PlayersCard.length; i++) {
-            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex, i > 0 && this.Playing);
+            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex, i > 0);
         }
         for (let i = 0; i < state.PerviousCard.length; i++) {
             if (i == state.PlayingIndex) {
@@ -121,19 +43,12 @@ export default class GameState extends cc.Component {
         }
         const RuleDoubleMultiply = 1 << 28;
         if (state.PlayersResult.length > 0) {
-            this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply, state.IsFirstResult);
+            this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply);
             if (state.IsFirstResult) {
-                this.replay.TestUpdate(state);
-                this.replay.IsTesting = false;
                 Client.SendMessage("game.save", "自動儲存" + new Date().toLocaleString());
             }
         } else {
             this.result.node.active = false;
-            if (this.Playing && state.PlayingIndex > 0) {
-                setTimeout(()=>{
-                    Client.SendMessage("game.next", "");
-                }, 1000);
-            }
         }
     }
 
@@ -169,6 +84,13 @@ export default class GameState extends cc.Component {
             Card: this.playersCard[seatIndex(this.state.PlayingIndex, this.state.PerviousCard.length)].Choose,
         };
         return action;
+    }
+
+    GetHint() {
+        if (this.state.PlayHints[this.state.PlayingIndex].length > 0) {
+            this.playersCard[seatIndex(this.state.PlayingIndex, this.state.PerviousCard.length)].ChooseCard(this.state.PlayHints[this.state.PlayingIndex][this.hintIndex].Code);
+            this.hintIndex = (this.hintIndex + 1) % this.state.PlayHints[this.state.PlayingIndex].length;
+        }
     }
 
 }

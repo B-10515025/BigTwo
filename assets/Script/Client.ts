@@ -16,6 +16,8 @@ export interface Config {
     BotStyle: number[][];
     Dealer: string;
     Debug: number[];
+
+	GameType: number;
 }
 
 interface CardSet {
@@ -55,6 +57,7 @@ export interface State {
 	PlayersCard: number[];
 	PlayingIndex: number;
     LastIndex: number;
+    PlayHints: CardSet[][];
 	PerviousCard: number[];
 	IsFirstResult: boolean;
 	PlayersResult: Result[];

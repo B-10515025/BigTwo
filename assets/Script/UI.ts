@@ -1,110 +1,147 @@
-import { Action, Client } from "./Client"
+import { Action, Client, Config, Message, State } from "./Client"
 import GameState from "./GameState"
-import Menu from "./Menu"
-import Record from "./Record"
-import TestResult from "./TestResult";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
 export default class UI extends cc.Component {
 
-    @property(cc.Button)
-    modeButton: cc.Button;
-
     @property(cc.Label)
-    modeLabel: cc.Label;
+    playerInfoLabel: cc.Label;
 
     @property(cc.Node)
-    testNode: cc.Node;
+    loginNode: cc.Node;
+
+    @property(cc.EditBox)
+    nicknameBox: cc.EditBox;
 
     @property(cc.Button)
-    newGameButton: cc.Button;
-    
-    @property(cc.Button)
-    playButton: cc.Button;
+    enterButton: cc.Button;
+
+    @property(cc.Node)
+    operateNode: cc.Node;
 
     @property(cc.Button)
     passButton: cc.Button;
 
     @property(cc.Button)
-    replayButton: cc.Button;
-    
-    @property(cc.Button)
-    undoButton: cc.Button;
+    hintButton: cc.Button;
 
     @property(cc.Button)
-    autoButton: cc.Button;
+    dealButton: cc.Button;
 
-    @property(cc.Button)
-    recordButton: cc.Button;
+    @property(cc.Node)
+    cardEvalNode: cc.Node;
 
-    @property(cc.Button)
-    testButton: cc.Button;
+    @property(cc.Node)
+    cardEvalList: cc.Node;
 
-    @property(cc.Button)
-    botButton: cc.Button;
+    @property(cc.Node)
+    gameEvalNode: cc.Node;
 
-    @property(cc.Button)
-    configButton: cc.Button;
+    @property(cc.Node)
+    gameEvalList: cc.Node;
 
     @property(GameState)
     game: GameState;
 
-    @property(cc.Node)
-    gameResult: cc.Node;
+    Config: Config = {
+        PlayerCount: 4,
+        DoubleRate: 1,
+        Rule: 0,
+        BotName: ["Rule-BasedAIV2", "Rule-BasedAIV2", "Rule-BasedAIV2", "Rule-BasedAIV2"],
+        BotStyle: [[0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]],
+        Dealer: "Random",
+        Debug: [0, 0, 0, 0],
 
-    @property(Record)
-    record: Record;
+        GameType: 0,
+    };
 
-    @property(TestResult)
-    testResult: TestResult;
-
-    @property(Menu)
-    menu: Menu;
+    state: State;
 
     onLoad () {
-        this.modeButton.node.on('click', () => { this.switchMode() });
-        this.newGameButton.node.on('click', () => { this.newGame() });
-        this.playButton.node.on('click', () => { this.playCard() });
-        this.passButton.node.on('click', () => { this.pass() });
-        this.replayButton.node.on('click', () => { this.replayGame() });
-        this.undoButton.node.on('click', () => { this.undo() });
-        this.autoButton.node.on('click', () => { this.autoNext() });
-        this.recordButton.node.on('click', () => { this.record.OpenRecord() });
-        this.testButton.node.on('click', () => { this.testBot() });
-        this.botButton.node.on('click', () => { this.menu.OpenBotMenu(); });
-        this.configButton.node.on('click', () => { this.menu.OpenConfigMenu(); });
-    }
-
-    switchMode() {
-        if (this.modeLabel.string == "遊玩模式") {
-            this.modeLabel.string = "測試模式";
-            this.testNode.active = true;
-            this.game.Playing = false;
-            this.game.Refresh();
-        } else {
-            this.modeLabel.string = "遊玩模式";
-            this.testNode.active = false;
-            this.game.Playing = true;
-            this.game.Refresh();
-        }
-    }
-
-    newGame() {
-        Client.SendMessage("game.new", this.menu.Config);
-    }
-
-    playCard() {
-        let action: Action = this.game.GetAction();
-        if (!action) {
-            return;
-        }
-        if (!this.game.Playing || action.Index == 0) {
-            if (action.Card > 0) {
-                Client.SendMessage("game.play", action);
+        const using = [ true, false, true, true, false, true, true, true,
+            true, false, false, false, false, false, false,
+            false, true, false, false, false, false, false, true, true, true, true, false ];
+        for (let i = 0; i < using.length; i++) {
+            if (using[i]) {
+                this.Config.Rule += rule(i);
             }
         }
+        this.enterButton.node.on('click', () => { this.login() });
+        this.passButton.node.on('click', () => { this.pass() });
+        this.hintButton.node.on('click', () => { this.hint() });
+        this.dealButton.node.on('click', () => { this.deal() });
+        for (let i = 0; i < this.cardEvalList.children.length; i++) {
+            this.cardEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.card", i + 1) });
+        }
+        for (let i = 0; i < this.gameEvalList.children.length; i++) {
+            this.gameEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.game", i + 1) });
+        }
+        Client.SetCallback("user.login", () => {
+            this.playerInfoLabel.node.active = true;
+            this.NewGame();
+        });
+        Client.SetCallback("user.info", (message: Message) => {
+            let scoreList = JSON.parse(message.Data);
+            let total = 0;
+            let win = 0;
+            for (let i = 0; i < scoreList.length; i++) {
+                total += scoreList[i];
+                if (scoreList[i] > 0) {
+                    win += 1;
+                }
+            }
+            this.playerInfoLabel.string = "玩家名稱: " + this.nicknameBox.string + "\n";
+            this.playerInfoLabel.string += "總場數: " + scoreList.length + "\n";
+            this.playerInfoLabel.string += "總分數: " + total + "\n";
+            if (scoreList.length > 0) {
+                this.playerInfoLabel.string += "勝率: " + (win / scoreList.length * 100).toFixed(2) + "%\n";
+            } else {
+                this.playerInfoLabel.string += "勝率: 0.00%\n";
+            }
+        });
+        Client.SetCallback("user.evaluate.card", () => {
+            this.cardEvalNode.active = false;
+            this.operateNode.active = this.state.PlayingIndex === 0;
+        });
+        Client.SetCallback("user.evaluate.game", () => {
+            this.gameEvalNode.active = false;
+            this.NewGame();
+        });
+    }
+
+    SetNickName() {
+        this.loginNode.active = true;
+    }
+
+    login() {
+        Client.SendMessage("user.login", this.nicknameBox.string);
+    }
+
+    SetState (state: State) {
+        this.state = state;
+        this.loginNode.active = false;
+        this.operateNode.active = state.PlayingIndex == 0 && !this.cardEvalNode.active;
+        if (state.PlayersResult.length == 0 && state.PlayingIndex > 0) {
+            let next = ()=>{
+                if (this.cardEvalNode.active) {
+                    setTimeout(next, 100);
+                } else {
+                    Client.SendMessage("game.next", "");
+                }
+            }
+            setTimeout(next, 100);
+        }
+    }
+
+    NewGame() {
+        this.Config.GameType = Math.floor(Math.random() * 5);
+        Client.SendMessage("game.new", this.Config);
+        this.cardEvalNode.active = true;
     }
 
     pass() {
@@ -112,26 +149,38 @@ export default class UI extends cc.Component {
         if (!action) {
             return;
         }
-        if (!this.game.Playing || action.Index == 0) {
+        if (action.Index == 0) {
             action.Card = 0;
             Client.SendMessage("game.play", action);
         }
     }
 
-
-    undo() {
-        Client.SendMessage("game.undo", "");
+    hint() {
+        this.game.GetHint();
     }
 
-    autoNext() {
-        Client.SendMessage("game.next", "");
+    deal() {
+        let action: Action = this.game.GetAction();
+        if (!action) {
+            return;
+        }
+        if (action.Index == 0) {
+            if (action.Card > 0) {
+                Client.SendMessage("game.play", action);
+            }
+        }
     }
 
-    replayGame() {
-        this.gameResult.active = true;
+    OpenGameEval() {
+        this.gameEvalNode.active = true;
     }
 
-    testBot() {
-        this.testResult.OpenResult(this.menu.Config.PlayerCount, this.menu.Config);
-    }
+}
+
+function rule(index: number) {
+    const pow = [   0, 1, 2, 3, 4, 5, 6, 7,
+                    8, 9, 10, 11, 12, 13, 14,
+                    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 28, 29, 
+                    30];
+    return (1 << pow[index + 1]) - (1 << pow[index]);
 }

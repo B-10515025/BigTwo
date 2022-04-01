@@ -1,10 +1,15 @@
 import CardSet from "./CardSet"
 import { Result } from "./Client"
+import UI from "./UI";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
 export default class GameResult extends cc.Component {
+
+    // 操作介面
+    @property(UI)
+    ui: UI;
 
     // 輸入UI
     @property(cc.Button)
@@ -25,7 +30,7 @@ export default class GameResult extends cc.Component {
         this.closeButton.node.on('click', () => { this.closeResult() });
     }
 
-    ShowResult(results: Result[], useMultiply: boolean, first: boolean) {
+    ShowResult(results: Result[], useMultiply: boolean) {
         // 更新UI
         this.resultNode.active = true;
         for (let i = 0; i < this.resultNode.children[0].children.length; i++) {
@@ -128,6 +133,7 @@ export default class GameResult extends cc.Component {
 
     closeResult() {
         this.resultNode.active = false;
+        this.ui.OpenGameEval();
     }
 
 }
