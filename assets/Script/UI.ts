@@ -1,4 +1,5 @@
-import { Action, Client, Config, Message, State } from "./Client"
+import { Action, Client, Config, Message, RankInfo, State } from "./Client"
+import DropDown from "./DropDown";
 import GameState from "./GameState"
 
 const {ccclass, property} = cc._decorator;
@@ -45,6 +46,39 @@ export default class UI extends cc.Component {
     @property(GameState)
     game: GameState;
 
+    @property(cc.Button)
+    settingButton: cc.Button;
+
+    @property(cc.Node)
+    settingNode: cc.Node;
+
+    @property(DropDown)
+    speedDropdown: DropDown;
+
+    @property(cc.Button)
+    settingCloseButton: cc.Button;
+
+    @property(cc.Button)
+    rankButton: cc.Button;
+
+    @property(cc.Node)
+    rankNode: cc.Node;
+
+    @property(cc.Label)
+    rankNumberLabel: cc.Label;
+
+    @property(cc.Label)
+    rankNameLabel: cc.Label;
+
+    @property(cc.Label)
+    rankScoreLabel: cc.Label;
+
+    @property(cc.Label)
+    rankWinRateLabel: cc.Label;
+
+    @property(cc.Button)
+    rankCloseButton: cc.Button;
+
     Config: Config = {
         PlayerCount: 4,
         DoubleRate: 1,
@@ -81,6 +115,13 @@ export default class UI extends cc.Component {
         for (let i = 0; i < this.gameEvalList.children.length; i++) {
             this.gameEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.game", i + 1) });
         }
+        this.settingButton.node.on('click', () => { this.settingNode.active = true });
+        this.speedDropdown.SetNames(["慢", "普通", "快", "無延遲"]);
+        this.speedDropdown.SetCurrent("普通");
+        this.settingCloseButton.node.on('click', () => { this.settingNode.active = false });
+        this.settingButton.node.on('click', () => { this.settingNode.active = true });
+        this.rankButton.node.on('click', () => { Client.SendMessage("user.rank", "") });
+        this.rankCloseButton.node.on('click', () => { this.rankNode.active = false });
         Client.SetCallback("user.login", () => {
             this.playerInfoLabel.node.active = true;
             this.NewGame();
@@ -112,6 +153,33 @@ export default class UI extends cc.Component {
             this.gameEvalNode.active = false;
             this.NewGame();
         });
+        Client.SetCallback("user.rank", (message: Message) => {
+            this.rankNode.active = true;
+            let rankList: RankInfo[] = JSON.parse(message.Data);
+            for (let i = 0; i < rankList.length; i++) {
+                rankList[i].total = 0;
+                rankList[i].win = 0;
+                for (let j = 0; j < rankList[i].ScoreList.length; j++) {
+                    rankList[i].total += rankList[i].ScoreList[j];
+                    if (rankList[i].ScoreList[j] > 0) {
+                        rankList[i].win += 1;
+                    }
+                }
+            }
+            rankList.sort((a, b)=>{
+                return b.total - a.total;
+            })
+            this.rankNumberLabel.string = "排名\n";
+            this.rankNameLabel.string = "玩家名稱\n";
+            this.rankScoreLabel.string = "總分\n";
+            this.rankWinRateLabel.string = "勝率 (勝場/敗場)\n";
+            for (let i = 0; i < rankList.length; i++) {
+                this.rankNumberLabel.string += "#" + (i + 1) + "\n";
+                this.rankNameLabel.string += rankList[i].Name + "\n";
+                this.rankScoreLabel.string += rankList[i].total + "\n";
+                this.rankWinRateLabel.string += (rankList[i].win / rankList[i].ScoreList.length * 100).toFixed(2) + "% (" + rankList[i].win + "/" + (rankList[i].ScoreList.length - rankList[i].win) + ")\n";
+            }
+        });
     }
 
     SetNickName() {
@@ -127,14 +195,23 @@ export default class UI extends cc.Component {
         this.loginNode.active = false;
         this.operateNode.active = state.PlayingIndex == 0 && !this.cardEvalNode.active;
         if (state.PlayersResult.length == 0 && state.PlayingIndex > 0) {
+            let time = 0;
+            let name = this.speedDropdown.GetCurrent();
+            if (name == "慢") {
+                time = Math.random() * 3000 + 4000;
+            } else if (name == "普通") {
+                time = Math.random() * 2000 + 1500;
+            } else if (name == "快") {
+                time = Math.random() * 500 + 500;
+            }
             let next = ()=>{
                 if (this.cardEvalNode.active) {
-                    setTimeout(next, 100);
+                    setTimeout(next, time);
                 } else {
                     Client.SendMessage("game.next", "");
                 }
             }
-            setTimeout(next, 100);
+            setTimeout(next, time);
         }
     }
 

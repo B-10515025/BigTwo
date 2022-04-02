@@ -88,6 +88,13 @@ export interface NameLists {
 	DealerNameList: string[];
 }
 
+export interface RankInfo {
+    Name: string;
+	ScoreList: number[];
+    total: number;
+    win: number;
+}
+
 export class Client {
 
     // Client private variable
@@ -141,7 +148,7 @@ export class Client {
         }
         Client.ws.onmessage = async function(event) {
             let data = JSON.parse(event.data);
-            console.log(data);
+            //console.log(data);
             Client.messageList.push(data);
         }
     }
