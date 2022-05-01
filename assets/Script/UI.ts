@@ -1,6 +1,7 @@
 import { Action, Client, Config, Message, RankInfo, State } from "./Client"
 import DropDown from "./DropDown";
 import GameState from "./GameState"
+import ServerTest from "./ServerTest";
 
 const {ccclass, property} = cc._decorator;
 
@@ -47,6 +48,15 @@ export default class UI extends cc.Component {
     game: GameState;
 
     @property(cc.Button)
+    infoButton: cc.Button;
+
+    @property(cc.Node)
+    infoNode: cc.Node;
+
+    @property(cc.Button)
+    infoCloseButton: cc.Button;
+
+    @property(cc.Button)
     settingButton: cc.Button;
 
     @property(cc.Node)
@@ -79,6 +89,9 @@ export default class UI extends cc.Component {
     @property(cc.Button)
     rankCloseButton: cc.Button;
 
+    @property(cc.Button)
+    testButton: cc.Button;
+
     Config: Config = {
         PlayerCount: 4,
         DoubleRate: 1,
@@ -110,18 +123,20 @@ export default class UI extends cc.Component {
         this.hintButton.node.on('click', () => { this.hint() });
         this.dealButton.node.on('click', () => { this.deal() });
         for (let i = 0; i < this.cardEvalList.children.length; i++) {
-            this.cardEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.card", i + 1) });
+            this.cardEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.card", i) });
         }
         for (let i = 0; i < this.gameEvalList.children.length; i++) {
-            this.gameEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.game", i + 1) });
+            this.gameEvalList.children[i].on('click', () => { Client.SendMessage("user.evaluate.game", i) });
         }
+        this.infoButton.node.on('click', () => { this.infoNode.active = true });
+        this.infoCloseButton.node.on('click', () => { this.infoNode.active = false });
         this.settingButton.node.on('click', () => { this.settingNode.active = true });
         this.speedDropdown.SetNames(["慢", "普通", "快", "無延遲"]);
-        this.speedDropdown.SetCurrent("普通");
+        this.speedDropdown.SetCurrent("快");
         this.settingCloseButton.node.on('click', () => { this.settingNode.active = false });
-        this.settingButton.node.on('click', () => { this.settingNode.active = true });
         this.rankButton.node.on('click', () => { Client.SendMessage("user.rank", "") });
         this.rankCloseButton.node.on('click', () => { this.rankNode.active = false });
+        this.testButton.node.on('click', () => { ServerTest.Test(1, 15) });
         Client.SetCallback("user.login", () => {
             this.playerInfoLabel.node.active = true;
             this.NewGame();
@@ -216,7 +231,7 @@ export default class UI extends cc.Component {
     }
 
     NewGame() {
-        this.Config.GameType = Math.floor(Math.random() * 5);
+        this.Config.GameType = Math.floor(Math.random() * 4) % 3;
         Client.SendMessage("game.new", this.Config);
         this.cardEvalNode.active = true;
     }

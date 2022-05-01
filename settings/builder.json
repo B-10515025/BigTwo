@@ -1,7 +1,7 @@
 {
   "title": "BigTwoClient",
   "packageName": "org.cocos2d.demo",
-  "startScene": "e57a2ef5-5e30-4f25-8e68-de606b04e247",
+  "startScene": "99f2097b-16d3-4976-9b31-f1340cffe8da",
   "excludeScenes": [],
   "orientation": {
     "landscapeLeft": true,
