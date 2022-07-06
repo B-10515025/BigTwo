@@ -47,6 +47,7 @@ export default class Replay extends cc.Component {
     gameState: GameState;
 
     featureList: FeatureInfo[];
+    totalList: FeatureInfo[];
     
     logIndex: number;
     currentLog: State[];
@@ -96,8 +97,9 @@ export default class Replay extends cc.Component {
         this.node.active = false;
     }
 
-    Open(featureList: FeatureInfo[]) {
+    Open(featureList: FeatureInfo[], totalList: FeatureInfo[]) {
         this.featureList = featureList;
+        this.totalList = totalList;
         this.featureList.sort((a: FeatureInfo, b: FeatureInfo): number => {
             return b.Time - a.Time;
         });
@@ -216,18 +218,13 @@ export default class Replay extends cc.Component {
             index = this.featureList[this.logIndex][KEY[type]];
         } else {
             let arr = [];
-            for (let i = 0; i < this.featureList.length; i++) {
-                arr.push(this.featureList[i][KEY[type]]);
+            for (let i = 0; i < this.totalList.length; i++) {
+                arr.push(this.totalList[i][KEY[type]]);
             }
             arr.sort((a: number, b: number): number => {
                 return a - b;
             });
-            for (let i = 0; i < arr.length; i++) {
-                if (arr[i] == this.featureList[this.logIndex][KEY[type]]) {
-                    index = Math.floor(i / this.featureList.length * NAME[type].length);
-                    break;
-                }
-            }
+            index = Math.floor(arr.indexOf(this.featureList[this.logIndex][KEY[type]]) / arr.length * NAME[type].length);
         }
         this.valueLabel.string = NAME[type][index];
     }

@@ -211,7 +211,7 @@ export default class Analysis extends cc.Component {
         this.countLabel.string = "資料場數:" + featureList.length;
         if (this.typeDropdown.GetCurrent() == "遊戲紀錄回放") {
             this.visualizer.node.active = false;
-            this.replay.Open(featureList);
+            this.replay.Open(featureList, this.featureList);
         } else {
             this.replay.node.active = false;
             this.visualizer.node.active = true;
@@ -250,11 +250,15 @@ export default class Analysis extends cc.Component {
                     total[featureList[i][KEY[typeIndex]]]++;
                 }
             } else {
-                featureList.sort((a: FeatureInfo, b: FeatureInfo): number => {
-                    return a[KEY[typeIndex]] - b[KEY[typeIndex]];
+                let arr = [];
+                for (let i = 0; i < this.featureList.length; i++) {
+                    arr.push(this.featureList[i][KEY[typeIndex]]);
+                }
+                arr.sort((a: number, b: number): number => {
+                    return a - b;
                 });
                 for (let i = 0; i < featureList.length; i++) {
-                    let index = Math.floor(i / featureList.length * count.length);
+                    let index = Math.floor(arr.indexOf(featureList[i][KEY[typeIndex]]) / arr.length * count.length);
                     if (targetIndex == featureList[i].GameEvaluate || targetIndex == 4 && featureList[i].GameEvaluate < 2 || targetIndex == 5 && featureList[i].GameEvaluate > 1) {
                         count[index]++;
                     }
