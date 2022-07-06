@@ -25,6 +25,9 @@ export default class GameResult extends cc.Component {
     @property(cc.SpriteFrame)
     lastSprite: cc.SpriteFrame;
 
+    @property(Boolean)
+    replay: boolean = false;
+
     onLoad () {
         // 設定UI
         this.closeButton.node.on('click', () => { this.closeResult() });
@@ -133,7 +136,9 @@ export default class GameResult extends cc.Component {
 
     closeResult() {
         this.resultNode.active = false;
-        this.ui.OpenGameEval();
+        if (!this.replay) {
+            this.ui.OpenGameEval();
+        }
     }
 
 }

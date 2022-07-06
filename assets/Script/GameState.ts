@@ -1,5 +1,5 @@
 import CardSet from "./CardSet"
-import { Action, Client, State } from "./Client"
+import { Action, State } from "./Client"
 import GameResult from "./GameResult"
 
 const {ccclass, property} = cc._decorator;
@@ -22,15 +22,18 @@ export default class GameState extends cc.Component {
     @property(GameResult)
     result: GameResult;
 
+    @property(Boolean)
+    replay: boolean = false;
+
     state: State;
     hintIndex: number = 0;
 
-    SetGameState (state: State) {
+    SetGameState(state: State) {
         this.state = state;
         this.hintIndex = 0;
         this.Reset();
         for (let i = 0; i < state.PlayersCard.length; i++) {
-            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex, i > 0);
+            this.playersCard[seatIndex(i, state.PlayersCard.length)].SetCard(state.PlayersCard[i], i == state.PlayingIndex, i > 0 && !this.replay);
         }
         for (let i = 0; i < state.PerviousCard.length; i++) {
             if (i == state.PlayingIndex) {
@@ -44,9 +47,6 @@ export default class GameState extends cc.Component {
         const RuleDoubleMultiply = 1 << 28;
         if (state.PlayersResult.length > 0) {
             this.result.ShowResult(state.PlayersResult, (state.Config.Rule & RuleDoubleMultiply) == RuleDoubleMultiply);
-            if (state.IsFirstResult) {
-                Client.SendMessage("game.save", "自動儲存" + new Date().toLocaleString());
-            }
         } else {
             this.result.node.active = false;
         }

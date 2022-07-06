@@ -24,6 +24,8 @@ export default class DropDown extends cc.Component {
     @property(cc.Node)
     barNode: cc.Node;
 
+    list: string[];
+
     onLoad () {
         this.selector.node.on('click', () => { this.onSelect(); });
     }
@@ -34,6 +36,8 @@ export default class DropDown extends cc.Component {
     }
 
     SetNames (botList: string[]) {
+        this.list = botList;
+        const MAX_ITEM = 7;
         this.contentNode.destroyAllChildren();
         this.contentNode.removeAllChildren();
         const Height = this.node.height;
@@ -44,9 +48,9 @@ export default class DropDown extends cc.Component {
         this.viewNode.height = botList.length * Height;
         this.contentNode.width = this.node.width;
         this.contentNode.height = botList.length * Height;
-        if (botList.length > 6) {
-            this.scrollNode.height = 6 * Height;
-            this.viewNode.height = 6 * Height;
+        if (botList.length > MAX_ITEM) {
+            this.scrollNode.height = MAX_ITEM * Height;
+            this.viewNode.height = MAX_ITEM * Height;
         }
         this.select.setContentSize(this.node.getContentSize());
         this.select.getComponent(cc.Label).lineHeight = Height;
@@ -66,10 +70,13 @@ export default class DropDown extends cc.Component {
             bot.anchorY = 1;
             bot.getComponent(cc.Label).string = botList[i];
             bot.addComponent(cc.Button);
-            bot.on('click', (target: cc.Node) => { 
+            bot.on('click', (target: cc.Node) => {
+                let change = this.select.getComponent(cc.Label).string != target.getComponent(cc.Label).string;
                 this.select.getComponent(cc.Label).string = target.getComponent(cc.Label).string;
                 this.onSelect();
-                this.OnChange();
+                if (change) {
+                    this.OnChange();
+                }
             });
             bot.parent = this.contentNode;
         }
@@ -81,6 +88,10 @@ export default class DropDown extends cc.Component {
 
     GetCurrent(): string {
         return this.select.getComponent(cc.Label).string;
+    }
+
+    GetIndex(): number {
+        return this.list.indexOf(this.select.getComponent(cc.Label).string);
     }
 
     OnChange() {

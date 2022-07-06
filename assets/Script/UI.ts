@@ -1,7 +1,7 @@
-import { Action, Client, Config, Message, RankInfo, State } from "./Client"
-import DropDown from "./DropDown";
+import { Action, Client, Config, Message, RankInfo, FeatureInfo, State } from "./Client"
+import DropDown from "./DropDown"
 import GameState from "./GameState"
-import ServerTest from "./ServerTest";
+import Analysis from "./Analysis"
 
 const {ccclass, property} = cc._decorator;
 
@@ -90,7 +90,10 @@ export default class UI extends cc.Component {
     rankCloseButton: cc.Button;
 
     @property(cc.Button)
-    testButton: cc.Button;
+    featureButton: cc.Button;
+
+    @property(Analysis)
+    analysisBoard: Analysis;
 
     Config: Config = {
         PlayerCount: 4,
@@ -136,7 +139,7 @@ export default class UI extends cc.Component {
         this.settingCloseButton.node.on('click', () => { this.settingNode.active = false });
         this.rankButton.node.on('click', () => { Client.SendMessage("user.rank", "") });
         this.rankCloseButton.node.on('click', () => { this.rankNode.active = false });
-        this.testButton.node.on('click', () => { ServerTest.Test(1, 15) });
+        this.featureButton.node.on('click', () => { this.analysisBoard.Open() });
         Client.SetCallback("user.login", () => {
             this.playerInfoLabel.node.active = true;
             this.NewGame();

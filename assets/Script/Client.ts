@@ -95,6 +95,28 @@ export interface RankInfo {
     win: number;
 }
 
+export interface FeatureInfo {
+	NickName: string;
+	Time: number;
+	Card: number;
+	GameType: number;
+	CardEvaluate: number;
+	GameEvaluate: number;
+    Win: number;
+	TurnAvgCardRate: number;
+	TurnMaxOrderDiff: number;
+	TurnMaxRateDiff: number;
+	ReverseRate: number;
+
+    Index: number;
+}
+
+export interface ReplayData {
+    Config: Config;
+	History: Log[];
+    PlayersResult: Result[];
+}
+
 export class Client {
 
     // Client private variable
