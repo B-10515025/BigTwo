@@ -1,7 +1,7 @@
 import { Client, FeatureInfo, Message } from "./Client"
 import DropDown from "./DropDown"
 import Replay from "./Replay"
-import { BarChartData, Visualizer } from "./Visualizer"
+import { BarChartColumn, BarChartData, Visualizer } from "./Visualizer"
 
 const {ccclass, property} = cc._decorator;
 
@@ -82,19 +82,19 @@ export default class Analysis extends cc.Component {
     onLoad () {
         this.typeDropdown.SetNames(["手牌調整評價", "KPI-勝負", "KPI-最大名次變動", "KPI-平均手牌數量", "KPI-手牌減少率", "KPI-優勢變化率", "遊戲紀錄回放"]);
         this.typeDropdown.OnChange = () => {
-            if (this.typeDropdown.GetCurrent() == "手牌調整評價") {
-                this.targetDropdown.SetNames(["感覺正常", "感覺偏好", "感覺偏差", "感覺有調整(好+差)"]);
-                this.targetDropdown.SetCurrent("感覺正常");
-            } else if (this.typeDropdown.GetCurrent() == "遊戲紀錄回放") {
+            if (this.typeDropdown.GetCurrent() == "遊戲紀錄回放") {
                 this.targetDropdown.SetNames(["-"]);
                 this.targetDropdown.SetCurrent("-");
             } else {
-                this.targetDropdown.SetNames(["體驗極差", "體驗略差", "體驗略好", "體驗極好", "體驗偏差(偏差+極差)", "體驗偏好(極好+略好)"]);
-                this.targetDropdown.SetCurrent("體驗偏好(極好+略好)");
+                this.targetDropdown.SetNames(["詳細", "精簡"]);
+                if (this.targetDropdown.GetIndex() < 0) {
+                    this.targetDropdown.SetCurrent("精簡");
+                }
             } 
             this.Draw();
         }
-        this.targetDropdown.SetNames(["感覺正常", "感覺偏好", "感覺偏差", "感覺有調整(好+差)"]);
+        this.targetDropdown.SetNames(["詳細", "精簡"]);
+        this.targetDropdown.SetCurrent("精簡");
         this.targetDropdown.OnChange = () => {
             this.Draw();
         }
@@ -217,10 +217,6 @@ export default class Analysis extends cc.Component {
             this.visualizer.node.active = true;
             this.visualizer.Clear();
             const KEY = ["GameType", "Win", "TurnMaxOrderDiff", "TurnAvgCardRate", "TurnMaxRateDiff", "ReverseRate"];
-            let typeIndex = this.typeDropdown.GetIndex();
-            let targetIndex = this.targetDropdown.GetIndex();
-            let data: BarChartData[] = [];
-            const SIZE = [3, 2, 4, 5, 5, 5];
             const NAME = [
                 ["正常發牌", "勝率加倍", "勝率減半"],
                 ["遊戲失敗", "遊戲獲勝"],
@@ -229,54 +225,88 @@ export default class Analysis extends cc.Component {
                 ["毫無減少機會", "減少比例微弱", "出牌機會普通", "有機會取得優勢", "單輪大量領先"],
                 ["後期反超", "後期較優", "前後期平均", "前期較優", "前期領先"],
             ];
-            let count = [];
+            const CLASS = [
+                ["正常", "高勝率", "低勝率"],
+                ["正常", "有調整"],
+                ["極差", "略差", "略好", "極好"],
+                ["偏差", "偏好"],
+            ];
+            let typeIndex = this.typeDropdown.GetIndex();
+            let targetIndex = this.targetDropdown.GetIndex();
+            let classIndex = typeIndex;
+            if (classIndex > 1) {
+                classIndex = 1;
+            }
+            classIndex = classIndex * 2 + targetIndex;
             let total = [];
-            for (let i = 0; i < SIZE[typeIndex]; i++) {
-                count.push(0);
+            for (let i = 0; i < NAME[typeIndex].length; i++) {
                 total.push(0);
             }
-            if (typeIndex == 0) {
-                for (let i = 0; i < featureList.length; i++) {
-                    if (targetIndex == featureList[i].CardEvaluate || targetIndex == 3 && featureList[i].CardEvaluate > 0) {
-                        count[featureList[i][KEY[typeIndex]]]++;
-                    }
-                    total[featureList[i][KEY[typeIndex]]]++;
+            let count = [];
+            for (let i = 0; i < CLASS[classIndex].length; i++) {
+                let temp = [];
+                for (let j = 0; j < NAME[typeIndex].length; j++) {
+                    temp.push(0);
                 }
-            } else if (typeIndex < 3) {
-                for (let i = 0; i < featureList.length; i++) {
-                    if (targetIndex == featureList[i].GameEvaluate || targetIndex == 4 && featureList[i].GameEvaluate < 2 || targetIndex == 5 && featureList[i].GameEvaluate > 1) {
-                        count[featureList[i][KEY[typeIndex]]]++;
-                    }
-                    total[featureList[i][KEY[typeIndex]]]++;
-                }
-            } else {
-                let arr = [];
+                count.push(temp);
+            }
+            let arr = [];
+            if (typeIndex > 2) {
                 for (let i = 0; i < this.featureList.length; i++) {
                     arr.push(this.featureList[i][KEY[typeIndex]]);
                 }
                 arr.sort((a: number, b: number): number => {
                     return a - b;
                 });
-                for (let i = 0; i < featureList.length; i++) {
-                    let index = Math.floor(arr.indexOf(featureList[i][KEY[typeIndex]]) / arr.length * count.length);
-                    if (targetIndex == featureList[i].GameEvaluate || targetIndex == 4 && featureList[i].GameEvaluate < 2 || targetIndex == 5 && featureList[i].GameEvaluate > 1) {
-                        count[index]++;
-                    }
-                    total[index]++;
-                }
             }
-            for (let i = 0; i < count.length; i++) {
-                let value = 0;
-                if (total[i] > 0) {
-                    value = count[i] / total[i] * 100;
+            for (let i = 0; i < featureList.length; i++) {
+                let index = featureList[i][KEY[typeIndex]];
+                if (typeIndex > 2) {
+                    index = Math.floor(arr.indexOf(featureList[i][KEY[typeIndex]]) / arr.length * total.length);
                 }
+                total[index]++;
+                let target = 0;
+                if (classIndex == 0) {
+                    target = featureList[i].CardEvaluate;
+                } else if (classIndex == 2) {
+                    target = featureList[i].GameEvaluate;
+                } else if (classIndex == 1) {
+                    if (featureList[i].CardEvaluate > 0) {
+                        target = 1;
+                    } 
+                } else {
+                    if (featureList[i].GameEvaluate > 1) {
+                        target = 1;
+                    } 
+                }
+                count[target][index]++;
+            }
+            const COLOR: cc.Color[] = [new cc.Color(57, 111, 201), new cc.Color(247, 120, 39), new cc.Color(181, 230, 29), new cc.Color(254, 198, 13)];
+            let data: BarChartData[] = [];
+            let column: BarChartColumn[] = [];
+            for (let i = 0; i < count.length; i++) {
                 let bar: BarChartData = {
-                    Name: NAME[typeIndex][i],
-                    Value: value,
+                    Name: CLASS[classIndex][i],
+                    Color: COLOR[i % COLOR.length],
+                    Value: [],
+                }
+                for (let j = 0; j < total.length; j++) {
+                    let value = 0;
+                    if (total[j] > 0) {
+                        value = count[i][j] / total[j] * 100;
+                    }
+                    bar.Value.push(value);
                 }
                 data.push(bar);
             }
-            this.visualizer.DrawBarChart("場數比例(%)", 100, data, false);
+            for (let i = 0; i < total.length; i++) {
+                let col: BarChartColumn = {
+                    Name: NAME[typeIndex][i],
+                    Value: total[i],
+                }
+                column.push(col)
+            }
+            this.visualizer.DrawBarChart("場數比例(%)", 100, data, column);
         }
     }
 

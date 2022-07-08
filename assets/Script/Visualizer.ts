@@ -8,6 +8,12 @@ export interface LineChartData {
 
 export interface BarChartData {
     Name: string;
+    Color: cc.Color;
+	Value: number[];
+}
+
+export interface BarChartColumn {
+    Name: string;
 	Value: number;
 }
 
@@ -18,7 +24,7 @@ export class Visualizer extends cc.Mask {
     graphics: cc.Graphics;
 
     @property(Boolean)
-    drawBorder: Boolean = true;
+    drawBorder: Boolean = false;
 
     onLoad() {
         this.Clear();
@@ -165,22 +171,12 @@ export class Visualizer extends cc.Mask {
         }
     }
 
-    DrawBarChart(name: string, range: number, data: BarChartData[], percentage: boolean) {
+    DrawBarChart(name: string, range: number, data: BarChartData[], column: BarChartColumn[]) {
         const offsetX = this.node.width * 0.15, offsetY = this.node.height * 0.1, rangeWidth = this.node.width * 0.85, rangeHeight = this.node.height * 0.85;
-        // draw axis
-        const axisWidth = 10;
-        const axisColor = cc.Color.BLACK;
-        this.graphics.lineWidth = axisWidth;
-        this.graphics.strokeColor = axisColor;
-        this.graphics.moveTo(0, offsetY);
-        this.graphics.lineTo(this.node.width, offsetY);
-        this.graphics.moveTo(offsetX, 0);
-        this.graphics.lineTo(offsetX, this.node.height);
-        this.graphics.stroke();
         // draw scale
         const scaleCount = 10;
         const scaleWidth = 5;
-        const scaleColor = cc.Color.BLACK;
+        const scaleColor = new cc.Color(100, 100, 100);
         this.graphics.lineWidth = scaleWidth;
         this.graphics.strokeColor = scaleColor;
         for (let i = 1; i <= scaleCount; i++) {
@@ -189,24 +185,23 @@ export class Visualizer extends cc.Mask {
         }
         this.graphics.stroke();
         // draw data
-        const dataWidth = 35;
-        const dataColor = cc.Color.GREEN;
-        const dataMinsColor = cc.Color.RED;
+        const dataWidth = 10;
+        const dataGap = 4;
         for (let i = 0; i < data.length; i++) {
+            const dataOffset = i * (dataWidth + dataGap) - (data.length - 1) * (dataWidth + dataGap) / 2;
             this.graphics.lineWidth = dataWidth;
-            if (data[i].Value < 0) {
-                this.graphics.strokeColor = dataMinsColor;
-                this.graphics.moveTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY);
-                this.graphics.lineTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY - data[i].Value / range * rangeHeight);
-            } else {
-                this.graphics.strokeColor = dataColor;
-                this.graphics.moveTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY);
-                this.graphics.lineTo(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY + data[i].Value / range * rangeHeight);
+            this.graphics.strokeColor = data[i].Color;
+            for (let j = 0; j < column.length; j++) {
+                if (j == data[i].Value.length) {
+                    break;
+                }
+                this.graphics.moveTo(offsetX + (j + 1) * rangeWidth / (column.length + 1) + dataOffset, offsetY);
+                this.graphics.lineTo(offsetX + (j + 1) * rangeWidth / (column.length + 1) + dataOffset, offsetY + data[i].Value[j] / range * rangeHeight);
             }
             this.graphics.stroke();
         }
         // axis text
-        const axisTextColor = cc.Color.BLACK;
+        const axisTextColor = new cc.Color(225, 225, 225);
         const axisTextSize = offsetY * 0.4;
         const axisTextBorder = offsetY * 0.1;
         let axisLabelNode = new cc.Node("axisLabel")
@@ -221,24 +216,24 @@ export class Visualizer extends cc.Mask {
         axisLabel.verticalAlign = cc.Label.VerticalAlign.BOTTOM;
         axisLabel.enableWrapText = false;
         // scale text
-        const scaleTextColor = cc.Color.BLACK;
+        const scaleTextColor = new cc.Color(225, 225, 225);
         const scaleTextSize = offsetY * 0.4;
         const scaleTextBorder = offsetY * 0.1;
-        for (let i = 0; i < data.length; i++) {
-            let scaleXLabelNode = new cc.Node("scaleXLabel")
+        for (let i = 0; i < column.length; i++) {
+            let scaleXLabelNode = new cc.Node("scaleXLabel");
             let scaleXLabel = scaleXLabelNode.addComponent(cc.Label);
-            scaleXLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (data.length + 1), offsetY - scaleTextBorder);
+            scaleXLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (column.length + 1), offsetY - scaleTextBorder);
             scaleXLabelNode.setAnchorPoint(0.5, 1);
             scaleXLabelNode.color = scaleTextColor;
             scaleXLabelNode.parent = this.graphics.node;
-            scaleXLabel.string = data[i].Name;
+            scaleXLabel.string = column[i].Name;
             scaleXLabel.fontSize = scaleTextSize;
             scaleXLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
             scaleXLabel.verticalAlign = cc.Label.VerticalAlign.TOP;
             scaleXLabel.enableWrapText = false;
         }
         for (let i = 1; i <= scaleCount; i++) {
-            let scaleYLabelNode = new cc.Node("axisYLabel")
+            let scaleYLabelNode = new cc.Node("axisYLabel");
             let scaleYLabel = scaleYLabelNode.addComponent(cc.Label);
             scaleYLabelNode.setPosition(offsetX - scaleTextBorder, offsetY + i / scaleCount * rangeHeight);
             scaleYLabelNode.setAnchorPoint(1, 0.5);
@@ -251,35 +246,56 @@ export class Visualizer extends cc.Mask {
             scaleYLabel.enableWrapText = false;
         }
         // data text
-        const dataTextColor = cc.Color.RED;
+        const dataTextColor = new cc.Color(225, 225, 225);
         const dataTextSize = this.node.height * 0.05;
-        let total = 0;
-        for (let i = 0; i < data.length; i++) {
-            total += data[i].Value;
-        }
-        for (let i = 0; i < data.length; i++) {
+        for (let i = 0; i < column.length; i++) {
             let dataLabelNode = new cc.Node("dataLabel")
             let dataLabel = dataLabelNode.addComponent(cc.Label);
-            let Y = offsetY + Math.abs(data[i].Value) / range * rangeHeight;
-            if (Y > offsetY + rangeHeight - dataTextSize) {
-                Y = offsetY + rangeHeight - dataTextSize;
-            }
-            dataLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (data.length + 1), Y);
+            let Y = offsetY + rangeHeight - dataTextSize;
+            dataLabelNode.setPosition(offsetX + (i + 1) * rangeWidth / (column.length + 1), Y);
             dataLabelNode.setAnchorPoint(0.5, 0);
             dataLabelNode.color = dataTextColor;
             dataLabelNode.parent = this.graphics.node;
-            dataLabel.string = (Math.round(data[i].Value * 100) / 100).toString();
-            if (percentage) {
-                if (total == 0) {
-                    dataLabel.string += "\n0%";
-                } else {
-                    dataLabel.string += "\n(" + Math.round(data[i].Value / total * 10000) / 100 + "%)";
-                }
-            }
+            dataLabel.string = column[i].Value.toString();
             dataLabel.fontSize = dataTextSize;
             dataLabel.lineHeight = dataTextSize;
             dataLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
             dataLabel.verticalAlign = cc.Label.VerticalAlign.BOTTOM;
+            dataLabel.enableWrapText = false;
+        }
+        // draw axis
+        const axisWidth = 10;
+        const axisColor = new cc.Color(100, 100, 100);
+        this.graphics.lineWidth = axisWidth;
+        this.graphics.strokeColor = axisColor;
+        this.graphics.moveTo(0, offsetY);
+        this.graphics.lineTo(this.node.width, offsetY);
+        //this.graphics.moveTo(offsetX, 0);
+        //this.graphics.lineTo(offsetX, this.node.height);
+        this.graphics.stroke();
+        // side text
+        const sideY = this.node.height * 0.95;
+        const sideGap = this.node.height * 0.07;
+        const circleRadius = this.node.height * 0.015;
+        const circleX = this.node.width * 0.015;
+        const sideTextX = this.node.width * 0.03;
+        const sideTextColor = new cc.Color(225, 225, 225);
+        const sideTextSize = this.node.height * 0.04;
+        for (let i = 0; i < data.length; i++) {
+            this.graphics.lineWidth = 1;
+            this.graphics.fillColor = data[i].Color;
+            this.graphics.circle(circleX, sideY - i * sideGap, circleRadius);
+            this.graphics.fill();
+            let dataLabelNode = new cc.Node("dataLabel")
+            let dataLabel = dataLabelNode.addComponent(cc.Label);
+            dataLabelNode.setPosition(sideTextX, sideY - i * sideGap);
+            dataLabelNode.setAnchorPoint(0, 0.5);
+            dataLabelNode.color = sideTextColor;
+            dataLabelNode.parent = this.graphics.node;
+            dataLabel.string = data[i].Name;
+            dataLabel.fontSize = sideTextSize;
+            dataLabel.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+            dataLabel.verticalAlign = cc.Label.VerticalAlign.CENTER;
             dataLabel.enableWrapText = false;
         }
     }
