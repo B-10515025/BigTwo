@@ -185,8 +185,11 @@ export class Visualizer extends cc.Mask {
         }
         this.graphics.stroke();
         // draw data
-        const dataWidth = 10;
         const dataGap = 4;
+        let dataWidth = 600 / (data.length * column.length);
+        if (dataWidth > 75) {
+            dataWidth = 75;
+        }
         for (let i = 0; i < data.length; i++) {
             const dataOffset = i * (dataWidth + dataGap) - (data.length - 1) * (dataWidth + dataGap) / 2;
             this.graphics.lineWidth = dataWidth;
