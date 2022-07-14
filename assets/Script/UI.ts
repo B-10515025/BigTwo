@@ -211,7 +211,7 @@ export default class UI extends cc.Component {
     SetState (state: State) {
         this.state = state;
         this.loginNode.active = false;
-        this.operateNode.active = state.PlayingIndex == 0 && !this.cardEvalNode.active;
+        this.operateNode.active = state.PlayingIndex == 0 && !this.cardEvalNode.active && state.PlayersResult.length == 0;
         if (state.PlayersResult.length == 0 && state.PlayingIndex > 0) {
             let time = 0;
             let name = this.speedDropdown.GetCurrent();
