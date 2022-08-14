@@ -235,6 +235,10 @@ export default class UI extends cc.Component {
 
     NewGame() {
         this.Config.GameType = Math.floor(Math.random() * 4) % 3;
+        let mode = Number(new URL(window.location.href).searchParams.get("mode"));
+        if (mode > 0 && mode < 3) {
+            this.Config.GameType = mode;
+        }
         Client.SendMessage("game.new", this.Config);
         this.cardEvalNode.active = true;
     }
